@@ -1,0 +1,27 @@
+# config
+config/*
+!config/app.example.yaml
+!config/app.prod.yaml
+!config/config.ini
+!config/config.example.ini
+.env*
+!.env.example
+
+.vscode
+
+# documents
+documents/design/*.bkp
+
+# atifacts
+.DS_Store
+bixin-api
+.vscode
+.idea
+__data__
+.cursorrules
+
+# logs
+logs/*
+stderr-main.log
+
+tmp/
