@@ -13,7 +13,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/mrhpn/go-rest-api/internal/database"
-	"github.com/mrhpn/go-rest-api/internal/modules/health"
+	"github.com/mrhpn/go-rest-api/internal/routes"
 	"github.com/rs/zerolog/log"
 )
 
@@ -40,12 +40,10 @@ func main() {
 	logger := app.SetupLogger(cfg.AppEnv)
 	log.Logger = logger
 
-	// ----- ✅ setup router and routes ----- //
+	// ----- ✅ setup router and register routes ----- //
 	router := gin.New()
 	router.Use(gin.Recovery())
-
-	// register health check routes
-	health.Register(router)
+	routes.Register(router, db)
 
 	// ----- ✅ setup (start/stop) HTTP server ----- //
 	if cfg.AppEnv != "development" {
