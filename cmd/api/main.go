@@ -13,6 +13,8 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/mrhpn/go-rest-api/internal/database"
+	"github.com/mrhpn/go-rest-api/internal/httpx"
+	"github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/routes"
 	"github.com/rs/zerolog/log"
 )
@@ -40,9 +42,16 @@ func main() {
 	logger := app.SetupLogger(cfg.AppEnv)
 	log.Logger = logger
 
+	// ----- ✅ register validators ----- //
+	httpx.RegisterValidators()
+
 	// ----- ✅ setup router and register routes ----- //
 	router := gin.New()
-	router.Use(gin.Recovery())
+	// recovery panic
+	router.Use(middlewares.Recovery())
+	// register route-request logger
+	router.Use(middlewares.RequestLogger())
+	// register routes
 	routes.Register(router, db)
 
 	// ----- ✅ setup (start/stop) HTTP server ----- //

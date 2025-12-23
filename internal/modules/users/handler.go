@@ -25,14 +25,15 @@ func NewHandler(r *gin.RouterGroup, service Service) {
 
 func (h *Handler) create(c *gin.Context) {
 	var req CreateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httpx.Fail(c, http.StatusBadRequest, httpx.ErrBadRequest, err.Error())
+
+	if err := httpx.BindJSON(c, &req); err != nil {
+		httpx.FailWithError(c, err)
 		return
 	}
 
-	user, err := h.service.Create(req)
+	user, err := h.service.Create(c, req)
 	if err != nil {
-		httpx.Fail(c, http.StatusInternalServerError, httpx.ErrInternal, err.Error())
+		httpx.FailWithError(c, err)
 		return
 	}
 
@@ -40,30 +41,52 @@ func (h *Handler) create(c *gin.Context) {
 }
 
 func (h *Handler) get(c *gin.Context) {
-	id := c.Param("id")
-	user, err := h.service.GetById(id)
-	if err != nil {
-		httpx.Fail(c, http.StatusNotFound, httpx.ErrNotFound, "user not found")
+	var params IDParam
+
+	if err := httpx.BindURI(c, &params); err != nil {
+		httpx.FailWithError(c, err)
 		return
 	}
 
-	httpx.OK(c, http.StatusOK, UserResponse{ID: user.ID, Email: user.Email})
+	user, err := h.service.GetById(c, params.ID)
+	if err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	httpx.OK(
+		c,
+		http.StatusOK,
+		UserResponse{ID: user.ID, Email: user.Email},
+	)
 }
 
 func (h *Handler) delete(c *gin.Context) {
-	id := c.Param("id")
-	if err := h.service.Delete(id); err != nil {
-		httpx.Fail(c, http.StatusInternalServerError, httpx.ErrInternal, err.Error())
+	var params IDParam
+
+	if err := httpx.BindURI(c, &params); err != nil {
+		httpx.FailWithError(c, err)
 		return
 	}
 
-	httpx.OK(c, http.StatusNoContent, nil)
+	if err := h.service.Delete(c, params.ID); err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func (h *Handler) restore(c *gin.Context) {
-	id := c.Param("id")
-	if err := h.service.Restore(id); err != nil {
-		httpx.Fail(c, http.StatusInternalServerError, httpx.ErrInternal, err.Error())
+	var params IDParam
+
+	if err := httpx.BindURI(c, &params); err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	if err := h.service.Restore(c, params.ID); err != nil {
+		httpx.FailWithError(c, err)
 		return
 	}
 

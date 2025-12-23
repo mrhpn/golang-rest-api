@@ -1,16 +1,17 @@
 package users
 
 import (
+	"context"
 	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
-	Create(req CreateUserRequest) (*User, error)
-	GetById(id string) (*User, error)
-	Delete(id string) error
-	Restore(id string) error
+	Create(ctx context.Context, req CreateUserRequest) (*User, error)
+	GetById(ctx context.Context, id string) (*User, error)
+	Delete(ctx context.Context, id string) error
+	Restore(ctx context.Context, id string) error
 }
 
 type service struct {
@@ -21,35 +22,64 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) Create(req CreateUserRequest) (*User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
+func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, error) {
+	// check email uniqueness
+	_, err := s.repo.FindByEmail(ctx, req.Email)
+	if err == nil {
+		return nil, ErrEmailExists
+	}
+	if !errors.Is(err, ErrUserNotFound) {
+		return nil, err // unexpected DB error
 	}
 
+	// hash password
+	hash, err := bcrypt.GenerateFromPassword(
+		[]byte(req.Password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return nil, ErrInternal
+	}
+
+	// create user
 	user := &User{
 		Email:        req.Email,
 		PasswordHash: string(hash),
 	}
 
-	if err := s.repo.Create(user); err != nil {
+	if err := s.repo.Create(ctx, user); err != nil {
 		return nil, err
 	}
 
 	return user, nil
 }
 
-func (s *service) GetById(id string) (*User, error) {
-	if id == "" {
-		return nil, errors.New("id is required")
+func (s *service) GetById(ctx context.Context, id string) (*User, error) {
+	return s.repo.FindById(ctx, id)
+}
+
+func (s *service) Delete(ctx context.Context, id string) error {
+	affected, err := s.repo.SoftDelete(ctx, id)
+	if err != nil {
+		return err
 	}
-	return s.repo.FindById(id)
+
+	if affected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
 }
 
-func (s *service) Delete(id string) error {
-	return s.repo.SoftDelete(id)
-}
+func (s *service) Restore(ctx context.Context, id string) error {
+	affected, err := s.repo.Restore(ctx, id)
+	if err != nil {
+		return err
+	}
 
-func (s *service) Restore(id string) error {
-	return s.repo.Restore(id)
+	if affected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
 }

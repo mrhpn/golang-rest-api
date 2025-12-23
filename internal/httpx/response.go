@@ -14,8 +14,9 @@ type ErrorResponse struct {
 }
 
 type ErrorBlock struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    string            `json:"code"`
+	Message string            `json:"message"`
+	Fields  map[string]string `json:"fields,omitempty"`
 }
 
 func OK(c *gin.Context, status int, data any) {
@@ -33,12 +34,25 @@ func OKWithMeta(c *gin.Context, status int, data any, meta any) {
 	})
 }
 
-func Fail(c *gin.Context, status int, code string, message string) {
+func Fail(c *gin.Context, status int, code string, message string, fields map[string]string) {
 	c.JSON(status, ErrorResponse{
 		Success: false,
 		Error: ErrorBlock{
 			Code:    code,
 			Message: message,
+			Fields:  fields,
 		},
 	})
+}
+
+func FailWithError(c *gin.Context, err error) {
+	mapped := MapError(err)
+
+	Fail(
+		c,
+		mapped.Status,
+		mapped.Code,
+		mapped.Message,
+		mapped.Fields,
+	)
 }
