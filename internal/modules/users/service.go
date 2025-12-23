@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -51,6 +52,8 @@ func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 		return nil, err
 	}
 
+	log.Ctx(ctx).Info().Str("email", req.Email).Msg("user created")
+
 	return user, nil
 }
 
@@ -68,6 +71,8 @@ func (s *service) Delete(ctx context.Context, id string) error {
 		return ErrUserNotFound
 	}
 
+	log.Ctx(ctx).Info().Str("user_id", id).Msg("user deleted")
+
 	return nil
 }
 
@@ -80,6 +85,8 @@ func (s *service) Restore(ctx context.Context, id string) error {
 	if affected == 0 {
 		return ErrUserNotFound
 	}
+
+	log.Ctx(ctx).Info().Str("user_id", id).Msg("user restored")
 
 	return nil
 }

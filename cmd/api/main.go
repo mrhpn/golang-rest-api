@@ -51,6 +51,8 @@ func main() {
 	router.Use(middlewares.Recovery())
 	// register route-request logger
 	router.Use(middlewares.RequestLogger())
+	// register request-id middleware
+	router.Use(middlewares.RequestID(cfg.AppEnv))
 	// register routes
 	routes.Register(router, db)
 

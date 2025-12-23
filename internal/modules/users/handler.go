@@ -31,7 +31,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.Create(c, req)
+	user, err := h.service.Create(httpx.ReqCtx(c), req)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -48,7 +48,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetById(c, params.ID)
+	user, err := h.service.GetById(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -69,7 +69,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Delete(c, params.ID); err != nil {
+	if err := h.service.Delete(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -85,7 +85,7 @@ func (h *Handler) restore(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Restore(c, params.ID); err != nil {
+	if err := h.service.Restore(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
