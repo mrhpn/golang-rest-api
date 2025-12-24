@@ -23,9 +23,7 @@ func SetupLogger(logCfg *config.LogConfig, env string) zerolog.Logger {
 		// production: write json to both Stdout (for docker/k8s logging) and a rotating log file
 
 		// ensure log directory exists
-		if _, err := os.Stat(logCfg.Path); os.IsNotExist(err) {
-			_ = os.Mkdir(logCfg.Path, 0755) // MkdirAll ?
-		}
+		_ = os.MkdirAll(logCfg.Path, 0755)
 
 		rotatingWriter := &lumberjack.Logger{
 			Filename:   filepath.Join(logCfg.Path, "app.log"),
