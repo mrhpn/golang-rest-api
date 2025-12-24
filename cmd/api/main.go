@@ -44,15 +44,16 @@ func main() {
 	router := gin.New()
 
 	// global middlewares
-	router.Use(middlewares.Recovery())
-	router.Use(middlewares.RequestID(cfg.AppEnv))
-	router.Use(middlewares.RequestLogger())
-
 	appContext := &app.AppContext{
 		DB:     db,
 		Cfg:    cfg,
 		Logger: logger,
 	}
+
+	router.Use(middlewares.Recovery())
+	router.Use(middlewares.CORS(appContext))
+	router.Use(middlewares.RequestID(cfg.AppEnv))
+	router.Use(middlewares.RequestLogger())
 	routes.Register(router, appContext)
 
 	// ----- ✅ 6. setup (start/stop) HTTP server ----- //

@@ -3,14 +3,16 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
-	AppEnv string
-	Port   string
-	DBUrl  string
-	JWT    JWTConfig
-	Log    LogConfig
+	AppEnv         string
+	Port           string
+	DBUrl          string
+	AllowedOrigins []string
+	JWT            JWTConfig
+	Log            LogConfig
 }
 
 type JWTConfig struct {
@@ -29,10 +31,19 @@ type LogConfig struct {
 }
 
 func MustLoad() *Config {
+	originsRaw := getEnv("ALLOWED_ORIGINS", "*")
+	var allowedOrigins []string
+	if originsRaw == "*" {
+		allowedOrigins = []string{"*"}
+	} else {
+		allowedOrigins = strings.Split(originsRaw, ",")
+	}
+
 	cfg := &Config{
-		AppEnv: getEnv("APP_ENV", "development"),
-		Port:   getEnv("APP_PORT", "8080"),
-		DBUrl:  getEnv("DATABASE_URL", ""),
+		AppEnv:         getEnv("APP_ENV", "development"),
+		Port:           getEnv("APP_PORT", "8080"),
+		DBUrl:          getEnv("DATABASE_URL", ""),
+		AllowedOrigins: allowedOrigins,
 
 		JWT: JWTConfig{
 			Secret:                       getEnv("JWT_SECRET", ""),
