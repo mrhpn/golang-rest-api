@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/types"
 	"github.com/rs/zerolog/log"
 )
@@ -24,7 +25,7 @@ type contextKey string
 const userKey contextKey = "user_identity"
 
 // RequireAuth validates the JWT and injects claims into the context
-func RequireAuth(secret string) gin.HandlerFunc {
+func RequireAuth(ctx *app.AppContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// check for Authorization header
 		authHeader := c.GetHeader("Authorization")
@@ -37,7 +38,7 @@ func RequireAuth(secret string) gin.HandlerFunc {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		claims := &UserClaims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
-			return []byte(secret), nil
+			return []byte(ctx.Cfg.JWT.Secret), nil
 		})
 
 		if err != nil || !token.Valid {

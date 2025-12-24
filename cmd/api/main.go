@@ -22,10 +22,10 @@ import (
 func main() {
 	// ----- ✅ 1. load env & configs ----- //
 	_ = godotenv.Load()
-	cfg := config.Load()
+	cfg := config.MustLoad()
 
 	// ----- ✅ 2. setup logger ----- //
-	logger := app.SetupLogger(cfg.AppEnv)
+	logger := app.SetupLogger(&cfg.Log, cfg.AppEnv)
 	log.Logger = logger
 
 	// ----- ✅ 3. connect to database ----- //
@@ -42,10 +42,18 @@ func main() {
 
 	// ----- ✅ 5. setup router and register routes ----- //
 	router := gin.New()
+
+	// global middlewares
 	router.Use(middlewares.Recovery())
 	router.Use(middlewares.RequestID(cfg.AppEnv))
 	router.Use(middlewares.RequestLogger())
-	routes.Register(router, db, cfg)
+
+	appContext := &app.AppContext{
+		DB:     db,
+		Cfg:    cfg,
+		Logger: logger,
+	}
+	routes.Register(router, appContext)
 
 	// ----- ✅ 6. setup (start/stop) HTTP server ----- //
 	srv := &http.Server{

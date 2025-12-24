@@ -2,17 +2,15 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/mrhpn/go-rest-api/internal/config"
+	"github.com/mrhpn/go-rest-api/internal/app"
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/types"
-	"gorm.io/gorm"
 )
 
-// can't put db and cfg to context?
-func Register(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
+func Register(router *gin.Engine, ctx *app.AppContext) {
 	api := router.Group("/api")
 
 	// ----------------------- Set up (Wiring) ----------------------- //
@@ -20,12 +18,12 @@ func Register(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	healthH := health.NewHandler()
 
 	// users
-	userRepo := users.NewRepository(db)
+	userRepo := users.NewRepository(ctx.DB)
 	userService := users.NewService(userRepo)
 	userH := users.NewHandler(userService)
 
 	// auth
-	authService := auth.NewService(userService, cfg.JWTSecret)
+	authService := auth.NewService(userService, ctx.Cfg.JWT.Secret)
 	authH := auth.NewHandler(authService)
 
 	// ----------------------- ROUTES ----------------------- //
@@ -41,7 +39,7 @@ func Register(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 	// ----------------------- users ----------------------- //
 	u := api.Group("/users")
-	u.Use(mw.RequireAuth(cfg.JWTSecret))
+	u.Use(mw.RequireAuth(ctx))
 	{
 		u.POST("", mw.AllowRoles(types.RoleSuperAdmin, types.RoleAdmin), userH.Create)
 		u.DELETE("/:id", mw.AllowRoles(types.RoleSuperAdmin, types.RoleAdmin), userH.Delete)
