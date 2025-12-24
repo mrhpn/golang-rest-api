@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mrhpn/go-rest-api/internal/config"
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
+	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/types"
@@ -23,6 +24,10 @@ func Register(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	userService := users.NewService(userRepo)
 	userH := users.NewHandler(userService)
 
+	// auth
+	authService := auth.NewService(userService, cfg.JWTSecret)
+	authH := auth.NewHandler(authService)
+
 	// ----------------------- ROUTES ----------------------- //
 
 	// ----------------------- health ----------------------- //
@@ -30,6 +35,9 @@ func Register(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	{
 		h.GET("/", healthH.Check)
 	}
+
+	// ----------------------- auth ----------------------- //
+	api.POST("/login", authH.Login)
 
 	// ----------------------- users ----------------------- //
 	u := api.Group("/users")

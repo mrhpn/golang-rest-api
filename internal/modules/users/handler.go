@@ -8,28 +8,31 @@ import (
 )
 
 type Handler struct {
-	service Service
+	userService Service
 }
 
-func NewHandler(service Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(userService Service) *Handler {
+	return &Handler{userService: userService}
 }
 
 func (h *Handler) Create(c *gin.Context) {
 	var req CreateUserRequest
-
 	if err := httpx.BindJSON(c, &req); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
-	user, err := h.service.Create(httpx.ReqCtx(c), req)
+	user, err := h.userService.Create(httpx.ReqCtx(c), req)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
-	httpx.OK(c, http.StatusCreated, UserResponse{ID: user.ID, Email: user.Email})
+	httpx.OK(
+		c,
+		http.StatusCreated,
+		UserResponse{ID: user.ID, Email: user.Email, Role: user.Role},
+	)
 }
 
 func (h *Handler) Get(c *gin.Context) {
@@ -40,7 +43,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetById(httpx.ReqCtx(c), params.ID)
+	user, err := h.userService.GetById(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -49,7 +52,7 @@ func (h *Handler) Get(c *gin.Context) {
 	httpx.OK(
 		c,
 		http.StatusOK,
-		UserResponse{ID: user.ID, Email: user.Email},
+		UserResponse{ID: user.ID, Email: user.Email, Role: user.Role},
 	)
 }
 
@@ -61,7 +64,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Delete(httpx.ReqCtx(c), params.ID); err != nil {
+	if err := h.userService.Delete(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -77,7 +80,7 @@ func (h *Handler) Restore(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Restore(httpx.ReqCtx(c), params.ID); err != nil {
+	if err := h.userService.Restore(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}

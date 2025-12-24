@@ -11,7 +11,7 @@ type Repository interface {
 	Create(ctx context.Context, user *User) error
 	FindById(ctx context.Context, id string) (*User, error)
 	FindByEmail(ctx context.Context, email string) (*User, error)
-	SoftDelete(ctx context.Context, id string) (int64, error)
+	Delete(ctx context.Context, id string) (int64, error)
 	Restore(ctx context.Context, id string) (int64, error)
 }
 
@@ -55,7 +55,7 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*User, erro
 	return &user, nil
 }
 
-func (r *repository) SoftDelete(ctx context.Context, id string) (int64, error) {
+func (r *repository) Delete(ctx context.Context, id string) (int64, error) {
 	result := r.db.WithContext(ctx).Delete(&User{}, "id = ?", id)
 	return result.RowsAffected, result.Error
 }

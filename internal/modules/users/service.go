@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/mrhpn/go-rest-api/internal/types"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -11,6 +12,7 @@ import (
 type Service interface {
 	Create(ctx context.Context, req CreateUserRequest) (*User, error)
 	GetById(ctx context.Context, id string) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
 	Delete(ctx context.Context, id string) error
 	Restore(ctx context.Context, id string) error
 }
@@ -45,14 +47,22 @@ func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 	// create user
 	user := &User{
 		Email:        req.Email,
+		Role:         req.Role,
 		PasswordHash: string(hash),
+	}
+
+	if user.Role == "" {
+		user.Role = types.RoleEmployee
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
 		return nil, err
 	}
 
-	log.Ctx(ctx).Info().Str("email", req.Email).Msg("user created")
+	log.Ctx(ctx).Info().
+		Str("email", req.Email).
+		Str("role", string(user.Role)).
+		Msg("user created")
 
 	return user, nil
 }
@@ -61,8 +71,12 @@ func (s *service) GetById(ctx context.Context, id string) (*User, error) {
 	return s.repo.FindById(ctx, id)
 }
 
+func (s *service) GetByEmail(ctx context.Context, email string) (*User, error) {
+	return s.repo.FindByEmail(ctx, email)
+}
+
 func (s *service) Delete(ctx context.Context, id string) error {
-	affected, err := s.repo.SoftDelete(ctx, id)
+	affected, err := s.repo.Delete(ctx, id)
 	if err != nil {
 		return err
 	}
