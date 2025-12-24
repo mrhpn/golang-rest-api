@@ -45,7 +45,7 @@ func main() {
 	router.Use(middlewares.Recovery())
 	router.Use(middlewares.RequestID(cfg.AppEnv))
 	router.Use(middlewares.RequestLogger())
-	routes.Register(router, db)
+	routes.Register(router, db, cfg)
 
 	// ----- ✅ 6. setup (start/stop) HTTP server ----- //
 	srv := &http.Server{

@@ -11,19 +11,11 @@ type Handler struct {
 	service Service
 }
 
-func NewHandler(r *gin.RouterGroup, service Service) {
-	h := &Handler{service: service}
-
-	users := r.Group("/users")
-	{
-		users.POST("", h.create)
-		users.GET("/:id", h.get)
-		users.DELETE("/:id", h.delete)
-		users.PUT("/:id/restore", h.restore)
-	}
+func NewHandler(service Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *Handler) create(c *gin.Context) {
+func (h *Handler) Create(c *gin.Context) {
 	var req CreateUserRequest
 
 	if err := httpx.BindJSON(c, &req); err != nil {
@@ -40,7 +32,7 @@ func (h *Handler) create(c *gin.Context) {
 	httpx.OK(c, http.StatusCreated, UserResponse{ID: user.ID, Email: user.Email})
 }
 
-func (h *Handler) get(c *gin.Context) {
+func (h *Handler) Get(c *gin.Context) {
 	var params IDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
@@ -61,7 +53,7 @@ func (h *Handler) get(c *gin.Context) {
 	)
 }
 
-func (h *Handler) delete(c *gin.Context) {
+func (h *Handler) Delete(c *gin.Context) {
 	var params IDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
@@ -77,7 +69,7 @@ func (h *Handler) delete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *Handler) restore(c *gin.Context) {
+func (h *Handler) Restore(c *gin.Context) {
 	var params IDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
