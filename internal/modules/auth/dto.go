@@ -7,14 +7,10 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// Note: LoginResponse will not include RefreshToken since it is sent via http-only cookie for security
 type LoginResponse struct {
-	AccessToken  string             `json:"access_token"`
-	RefreshToken string             `json:"refresh_token"`
-	User         users.UserResponse `json:"user"`
-}
-
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
+	AccessToken string             `json:"access_token"`
+	User        users.UserResponse `json:"user"`
 }
 
 type RefreshTokenResponse struct {

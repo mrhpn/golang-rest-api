@@ -29,7 +29,7 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 		ctx.Cfg.JWT.RefreshTokenExpirationSecond,
 	)
 	authService := auth.NewService(userService, securityHandler)
-	authH := auth.NewHandler(authService)
+	authH := auth.NewHandler(authService, ctx)
 
 	// ----------------------- ROUTES ----------------------- //
 
