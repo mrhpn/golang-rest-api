@@ -7,7 +7,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
-	"github.com/mrhpn/go-rest-api/internal/types"
+	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
 func Register(router *gin.Engine, ctx *app.AppContext) {
@@ -23,7 +23,12 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 	userH := users.NewHandler(userService)
 
 	// auth
-	authService := auth.NewService(userService, ctx.Cfg.JWT.Secret)
+	securityHandler := security.NewJWTHandler(
+		ctx.Cfg.JWT.Secret,
+		ctx.Cfg.JWT.AccessTokenExpirationSecond,
+		ctx.Cfg.JWT.RefreshTokenExpirationSecond,
+	)
+	authService := auth.NewService(userService, securityHandler)
 	authH := auth.NewHandler(authService)
 
 	// ----------------------- ROUTES ----------------------- //
@@ -41,9 +46,9 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 	u := api.Group("/users")
 	u.Use(mw.RequireAuth(ctx))
 	{
-		u.POST("", mw.AllowRoles(types.RoleSuperAdmin, types.RoleAdmin), userH.Create)
-		u.DELETE("/:id", mw.AllowRoles(types.RoleSuperAdmin, types.RoleAdmin), userH.Delete)
-		u.PUT("/:id/restore", mw.AllowRoles(types.RoleSuperAdmin, types.RoleAdmin), userH.Restore)
 		u.GET("/:id", userH.Get)
+		u.POST("", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Create)
+		u.DELETE("/:id", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Delete)
+		u.PUT("/:id/restore", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Restore)
 	}
 }

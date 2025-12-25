@@ -2,58 +2,45 @@ package auth
 
 import (
 	"context"
-	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
+	"github.com/mrhpn/go-rest-api/internal/security"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
-	Login(ctx context.Context, email, password string) (string, *users.User, error)
+	Login(ctx context.Context, email, password string) (*security.TokenPair, *users.User, error)
 }
 
 type service struct {
-	userService users.Service
-	jwtSecret   string
+	userService     users.Service
+	securityHandler *security.JWTHandler
 }
 
-func NewService(userService users.Service, jwtSecret string) Service {
+func NewService(userService users.Service, jwtHandler *security.JWTHandler) Service {
 	return &service{
-		userService: userService,
-		jwtSecret:   jwtSecret,
+		userService:     userService,
+		securityHandler: jwtHandler,
 	}
 }
 
-func (s *service) Login(ctx context.Context, email, password string) (string, *users.User, error) {
-	// get user from User module
+func (s *service) Login(ctx context.Context, email, password string) (*security.TokenPair, *users.User, error) {
+	// 1. get user from User module
 	user, err := s.userService.GetByEmail(ctx, email)
 	if err != nil {
-		return "", nil, ErrInvalidCrendentials
+		return nil, nil, ErrInvalidCrendentials
 	}
 
-	// verify password
+	// 2. verify password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return "", nil, ErrInvalidCrendentials
+		return nil, nil, ErrInvalidCrendentials
 	}
 
-	// create jwt claims
-	claims := middlewares.UserClaims{
-		UserID: user.ID,
-		Role:   user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	// sign token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(s.jwtSecret))
+	// 3. create token pair
+	tokens, err := s.securityHandler.GenerateTokenPair(user.ID, user.Role)
 	if err != nil {
-		return "", nil, ErrTokenGeneration
+		return nil, nil, ErrTokenGeneration
 	}
 
-	return tokenString, user, nil
+	return tokens, user, nil
 }

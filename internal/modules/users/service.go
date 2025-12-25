@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mrhpn/go-rest-api/internal/types"
+	"github.com/mrhpn/go-rest-api/internal/security"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -52,7 +52,7 @@ func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 	}
 
 	if user.Role == "" {
-		user.Role = types.RoleEmployee
+		user.Role = security.RoleEmployee
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {

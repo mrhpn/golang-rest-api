@@ -16,6 +16,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/routes"
+	"github.com/mrhpn/go-rest-api/internal/security"
 	"github.com/rs/zerolog/log"
 )
 
@@ -43,13 +44,20 @@ func main() {
 	// ----- ✅ 5. setup router and register routes ----- //
 	router := gin.New()
 
-	// global middlewares
+	securityHandler := security.NewJWTHandler(
+		cfg.JWT.Secret,
+		cfg.JWT.AccessTokenExpirationSecond,
+		cfg.JWT.RefreshTokenExpirationSecond,
+	)
+
 	appContext := &app.AppContext{
-		DB:     db,
-		Cfg:    cfg,
-		Logger: logger,
+		DB:              db,
+		Cfg:             cfg,
+		Logger:          logger,
+		SecurityHandler: securityHandler,
 	}
 
+	// global middlewares
 	router.Use(middlewares.Recovery())
 	router.Use(middlewares.CORS(appContext))
 	router.Use(middlewares.RequestID(cfg.AppEnv))

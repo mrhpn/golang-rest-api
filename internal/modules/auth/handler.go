@@ -27,15 +27,18 @@ func (h *Handler) Login(c *gin.Context) {
 
 	ctx := httpx.ReqCtx(c)
 
-	token, user, err := h.authService.Login(ctx, req.Email, req.Password)
+	tokenPair, user, err := h.authService.Login(ctx, req.Email, req.Password)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
-	httpx.OK(c, http.StatusOK, LoginResponse{Token: token, User: users.UserResponse{
-		ID:    user.ID,
-		Email: user.Email,
-		Role:  user.Role,
-	}})
+	httpx.OK(c, http.StatusOK, LoginResponse{
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+		User: users.UserResponse{
+			ID:    user.ID,
+			Email: user.Email,
+			Role:  user.Role,
+		}})
 }

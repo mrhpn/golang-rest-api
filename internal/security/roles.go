@@ -1,4 +1,4 @@
-package types
+package security
 
 type Role string
 
