@@ -41,6 +41,7 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 
 	// ----------------------- auth ----------------------- //
 	api.POST("/login", authH.Login)
+	api.POST("/auth/refresh", authH.Refresh)
 
 	// ----------------------- users ----------------------- //
 	u := api.Group("/users")

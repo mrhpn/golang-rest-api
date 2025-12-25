@@ -12,3 +12,11 @@ type LoginResponse struct {
 	RefreshToken string             `json:"refresh_token"`
 	User         users.UserResponse `json:"user"`
 }
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type RefreshTokenResponse struct {
+	AccessToken string `json:"access_token"`
+}

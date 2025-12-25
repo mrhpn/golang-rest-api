@@ -14,4 +14,10 @@ var (
 		"EXPIRED_TOKEN",
 		"token has expired",
 	)
+
+	ErrBlockedUser = errors.New(
+		errors.Unauthorized,
+		"USER_BLOCKED",
+		"user is blocked",
+	)
 )

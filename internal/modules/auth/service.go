@@ -10,6 +10,7 @@ import (
 
 type Service interface {
 	Login(ctx context.Context, email, password string) (*security.TokenPair, *users.User, error)
+	RefreshToken(ctx context.Context, refreshToken string) (string, error)
 }
 
 type service struct {
@@ -43,4 +44,29 @@ func (s *service) Login(ctx context.Context, email, password string) (*security.
 	}
 
 	return tokens, user, nil
+}
+
+func (s *service) RefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	// 1. validate the signature and expiry of the refresh token
+	claims, err := s.securityHandler.ValidateToken(refreshToken)
+	if err != nil {
+		return "", security.ErrExpiredToken
+	}
+
+	// 2. hit the db: ensure the user still exists and isn't blocked
+	user, err := s.userService.GetById(ctx, claims.UserID)
+	if err != nil {
+		return "", security.ErrInvalidToken
+	}
+
+	// todo:
+	// if user.status == "Blocked" { return "", security.ErrBlockedUser }
+
+	// 3. generate ONLY a new access token
+	tokens, err := s.securityHandler.GenerateTokenPair(user.ID, user.Role)
+	if err != nil {
+		return "", ErrTokenGeneration
+	}
+
+	return tokens.AccessToken, nil
 }
