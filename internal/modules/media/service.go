@@ -3,5 +3,5 @@ package media
 import "mime/multipart"
 
 type Service interface {
-	Upload(file *multipart.FileHeader, subDir string) (string, error)
+	Upload(file *multipart.FileHeader, subDir FileCategory) (string, error)
 }

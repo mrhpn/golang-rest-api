@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"path/filepath"
 	"time"
@@ -65,7 +66,7 @@ func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool)
 }
 
 // Upload streams the file to MinIO and returns the path
-func (s *minioService) Upload(file *multipart.FileHeader, subDir string) (string, error) {
+func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (string, error) {
 	ctx := context.Background()
 
 	src, err := file.Open()
@@ -74,11 +75,37 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir string) (string
 	}
 	defer src.Close()
 
+	// 1. initialize vars with raw upload data
+	var reader io.Reader = src
+	size := file.Size
+	contentType := file.Header.Get("Content-Type")
 	ext := filepath.Ext(file.Filename)
+
+	// 2. define processing rules based on directory
+	var opts *ImageOptions
+	switch subDir {
+	case FileCategoryProfiles:
+		opts = &ImageOptions{MaxWidth: 400, MaxHeight: 400, Quality: 75}
+	case FileCategoryThumbnails:
+		opts = &ImageOptions{MaxWidth: 800, MaxHeight: 600, Quality: 80}
+	}
+
+	// 3. apply processing if options were found
+	if opts != nil {
+		processed, newSize, err := ProcessImage(src, *opts)
+		if err == nil {
+			reader = processed
+			size = newSize
+			contentType = "image/jpeg"
+			ext = ".jpg"
+		}
+	}
+
+	// 4. construct the obj name
 	objectName := fmt.Sprintf("%s/%s%s", subDir, uuid.New().String(), ext)
 
-	_, err = s.client.PutObject(ctx, s.bucketName, objectName, src, file.Size, minio.PutObjectOptions{
-		ContentType: file.Header.Get("Content-Type"),
+	_, err = s.client.PutObject(ctx, s.bucketName, objectName, reader, size, minio.PutObjectOptions{
+		ContentType: contentType,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to upload object to minio: %w", err)

@@ -10,6 +10,12 @@ import (
 )
 
 type FileType string
+type FileCategory string
+
+const (
+	FileCategoryProfiles   FileCategory = "profiles"
+	FileCategoryThumbnails FileCategory = "thumbnails"
+)
 
 const (
 	FileTypeImage FileType = "image"
@@ -58,14 +64,14 @@ func NewHandler(mediaService Service) *Handler {
 }
 
 func (h *Handler) UploadProfilePicture(c *gin.Context) {
-	h.handleUpload(c, "profiles", FileTypeImage)
+	h.handleUpload(c, FileCategoryProfiles, FileTypeImage)
 }
 
 func (h *Handler) UploadThumbnail(c *gin.Context) {
-	h.handleUpload(c, "thumbnails", FileTypeImage)
+	h.handleUpload(c, FileCategoryThumbnails, FileTypeImage)
 }
 
-func (h *Handler) handleUpload(c *gin.Context, subDir string, category FileType) {
+func (h *Handler) handleUpload(c *gin.Context, subDir FileCategory, category FileType) {
 	// 1. get policy for type
 	policy, exists := Policies[category]
 	if !exists {
