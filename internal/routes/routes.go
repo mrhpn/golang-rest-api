@@ -6,6 +6,7 @@ import (
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
+	"github.com/mrhpn/go-rest-api/internal/modules/media"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
@@ -18,38 +19,46 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 	healthH := health.NewHandler()
 
 	// users
-	userRepo := users.NewRepository(ctx.DB)
-	userService := users.NewService(userRepo)
-	userH := users.NewHandler(userService)
+	userR := users.NewRepository(ctx.DB)
+	userS := users.NewService(userR)
+	userH := users.NewHandler(userS)
 
 	// auth
-	securityHandler := security.NewJWTHandler(
+	securityH := security.NewJWTHandler(
 		ctx.Cfg.JWT.Secret,
 		ctx.Cfg.JWT.AccessTokenExpirationSecond,
 		ctx.Cfg.JWT.RefreshTokenExpirationSecond,
 	)
-	authService := auth.NewService(userService, securityHandler)
-	authH := auth.NewHandler(authService, ctx)
+	authS := auth.NewService(userS, securityH)
+	authH := auth.NewHandler(authS, ctx)
+
+	// media
+	mediaH := media.NewHandler(ctx.MediaService)
 
 	// ----------------------- ROUTES ----------------------- //
 
 	// ----------------------- health ----------------------- //
-	h := api.Group("/health")
-	{
-		h.GET("/", healthH.Check)
-	}
+	api.GET("/health", healthH.Check)
 
 	// ----------------------- auth ----------------------- //
 	api.POST("/login", authH.Login)
 	api.POST("/auth/refresh", authH.Refresh)
 
 	// ----------------------- users ----------------------- //
-	u := api.Group("/users")
-	u.Use(mw.RequireAuth(ctx))
+	usersGroup := api.Group("/users")
+	usersGroup.Use(mw.RequireAuth(ctx))
 	{
-		u.GET("/:id", userH.Get)
-		u.POST("", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Create)
-		u.DELETE("/:id", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Delete)
-		u.PUT("/:id/restore", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Restore)
+		usersGroup.GET("/:id", userH.Get)
+		usersGroup.POST("", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Create)
+		usersGroup.DELETE("/:id", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Delete)
+		usersGroup.PUT("/:id/restore", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Restore)
+	}
+
+	// ----------------------- media ----------------------- //
+	mediaGroup := api.Group("/media")
+	mediaGroup.Use(mw.RequireAuth(ctx))
+	{
+		mediaGroup.POST("/upload/profile", mediaH.UploadProfilePicture)
+		mediaGroup.POST("/upload/thumbnail", mediaH.UploadThumbnail)
 	}
 }

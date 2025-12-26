@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
@@ -16,6 +18,13 @@ func setupRouter(ctx *app.AppContext) *gin.Engine {
 
 	router := gin.New()
 
+	// global request body limit middleware
+	router.Use(func(c *gin.Context) {
+		// limit total request size to 8MB
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, ctx.Cfg.MaxRequestBodySize)
+		c.Next()
+	})
+
 	// global middlewares
 	router.Use(middlewares.Recovery())
 	router.Use(middlewares.CORS(ctx))
@@ -24,6 +33,9 @@ func setupRouter(ctx *app.AppContext) *gin.Engine {
 
 	// register all module routes
 	routes.Register(router, ctx)
+
+	// ram management
+	router.MaxMultipartMemory = 8 << 20
 
 	return router
 }

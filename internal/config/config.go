@@ -7,12 +7,14 @@ import (
 )
 
 type Config struct {
-	AppEnv         string
-	Port           string
-	DBUrl          string
-	AllowedOrigins []string
-	JWT            JWTConfig
-	Log            LogConfig
+	AppEnv             string
+	Port               string
+	DBUrl              string
+	AllowedOrigins     []string
+	MaxRequestBodySize int64
+	JWT                JWTConfig
+	Log                LogConfig
+	Storage            MinioConfig
 }
 
 type JWTConfig struct {
@@ -30,6 +32,14 @@ type LogConfig struct {
 	Compress       bool
 }
 
+type MinioConfig struct {
+	Host       string
+	AccessKey  string
+	SecretKey  string
+	BucketName string
+	UseSSL     bool
+}
+
 func MustLoad() *Config {
 	originsRaw := getEnv("ALLOWED_ORIGINS", "*")
 	var allowedOrigins []string
@@ -40,10 +50,11 @@ func MustLoad() *Config {
 	}
 
 	cfg := &Config{
-		AppEnv:         getEnv("APP_ENV", "development"),
-		Port:           getEnv("APP_PORT", "8080"),
-		DBUrl:          getEnv("DATABASE_URL", ""),
-		AllowedOrigins: allowedOrigins,
+		AppEnv:             getEnv("APP_ENV", "development"),
+		Port:               getEnv("APP_PORT", "8080"),
+		DBUrl:              getEnv("DATABASE_URL", ""),
+		AllowedOrigins:     allowedOrigins,
+		MaxRequestBodySize: int64(getEnvAsInt("MAX_REQUEST_BODY_SIZE_MB", 50)) * 1024 * 1024,
 
 		JWT: JWTConfig{
 			Secret:                       getEnv("JWT_SECRET", ""),
@@ -59,6 +70,14 @@ func MustLoad() *Config {
 			MaxAgeDay:      getEnvAsInt("LOG_MAX_DAY", 30),
 			Compress:       getEnvAsBool("LOG_COMPRESS", true),
 		},
+
+		Storage: MinioConfig{
+			Host:       getEnv("STORAGE_HOST", ""),
+			AccessKey:  getEnv("STORAGE_ACCESS_KEY", "minioadmin"),
+			SecretKey:  getEnv("STORAGE_ACCESS_KEY", "minioadmin"),
+			BucketName: getEnv("STORAGE_BUCKET_NAME", "app_assets"),
+			UseSSL:     getEnvAsBool("STORAGE_USE_SSL", false),
+		},
 	}
 
 	if cfg.DBUrl == "" {
@@ -66,6 +85,9 @@ func MustLoad() *Config {
 	}
 	if cfg.JWT.Secret == "" {
 		panic("env: JWT_SECRET is missing")
+	}
+	if cfg.Storage.Host == "" {
+		panic("env: STORAGE_HOST is missing")
 	}
 
 	return cfg
