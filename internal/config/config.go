@@ -74,7 +74,7 @@ func MustLoad() *Config {
 		Storage: MinioConfig{
 			Host:       getEnv("STORAGE_HOST", ""),
 			AccessKey:  getEnv("STORAGE_ACCESS_KEY", "minioadmin"),
-			SecretKey:  getEnv("STORAGE_ACCESS_KEY", "minioadmin"),
+			SecretKey:  getEnv("STORAGE_SECRET_KEY", "minioadmin"),
 			BucketName: getEnv("STORAGE_BUCKET_NAME", "app_assets"),
 			UseSSL:     getEnvAsBool("STORAGE_USE_SSL", false),
 		},
