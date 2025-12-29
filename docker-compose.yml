@@ -1,6 +1,24 @@
-version: '3.9'
-
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app_api
+    ports:
+      - '8080:8080'
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/go_rest_api_db?sslmode=disable
+      - STORAGE_HOST=minio:9000
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - app_network
+
   db:
     image: postgres:16-alpine
     container_name: app_db
@@ -10,11 +28,18 @@ services:
       POSTGRES_DB: go_rest_api_db
     ports:
       - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - app_network
 
   minio:
-    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
     container_name: app_minio
     ports:
       - '9000:9000' # api
@@ -30,7 +55,13 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - app_network
 
 volumes:
   db_data:
   minio_data:
+
+networks:
+  app_network:
+    driver: bridge
