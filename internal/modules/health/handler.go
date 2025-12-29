@@ -21,6 +21,14 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
+// Check health godoc
+//
+//	@Summary		Check health
+//	@Description	Check health status of server
+//	@Tags			Health
+//	@Produce		json
+//	@Success		200	{object}	map[string]string	"Returns {"status": "healthy"}"
+//	@Router			/health [get]
 func (h *Handler) Check(c *gin.Context) {
 	httpx.OK(c, http.StatusOK, gin.H{"status": "healthy"})
 }

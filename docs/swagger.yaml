@@ -1,0 +1,361 @@
+basePath: /api
+definitions:
+  auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auth.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/users.UserResponse'
+    type: object
+  auth.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+    type: object
+  httpx.ErrorBlock:
+    properties:
+      code:
+        type: string
+      fields:
+        type: object
+      message:
+        type: string
+    type: object
+  httpx.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/httpx.ErrorBlock'
+      success:
+        example: false
+        type: boolean
+    type: object
+  httpx.SuccessResponse:
+    properties:
+      data: {}
+      meta: {}
+      success:
+        example: true
+        type: boolean
+    type: object
+  security.Role:
+    enum:
+    - superadmin
+    - admin
+    - employee
+    - user
+    type: string
+    x-enum-varnames:
+    - RoleSuperAdmin
+    - RoleAdmin
+    - RoleEmployee
+    - RoleUser
+  users.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/security.Role'
+        enum:
+        - admin
+        - employee
+        - user
+    required:
+    - email
+    - password
+    - role
+    type: object
+  users.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/security.Role'
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:8080
+info:
+  contact:
+    email: mr.htetphyonaing@gmail.com
+    name: mrhpn
+    url: http://www.swagger.io/support
+  description: A production-ready REST API boilerplate with Gin, GORM, and MinIO.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Go REST API
+  version: "1.0"
+paths:
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Generate a new access token, request must have valid refresh token
+        in cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: Refresh token
+      tags:
+      - Auth
+  /health:
+    get:
+      description: Check health status of server
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Returns {"status": "healthy"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Check health
+      tags:
+      - Health
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns access token in response and set
+        refresh token in httpOnly cookie
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: User Login
+      tags:
+      - Auth
+  /media/upload/profile:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload an image file to be used as a profile picture. Max 5MB.
+      parameters:
+      - description: Image file (jpg, jpeg, png)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.SuccessResponse'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload profile picture
+      tags:
+      - Media
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create a user
+      parameters:
+      - description: CreateUserRequest
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/users.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create user
+      tags:
+      - User
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user by their ULID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - User
+    get:
+      consumes:
+      - application/json
+      description: Get a user by their ULID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/users.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user
+      tags:
+      - User
+  /users/{id}/restore:
+    put:
+      consumes:
+      - application/json
+      description: Restore a deleted user by their ULID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Restore user
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer " followed by a space and then your token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

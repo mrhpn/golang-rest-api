@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	_ "github.com/mrhpn/go-rest-api/docs"
 	"github.com/mrhpn/go-rest-api/internal/app"
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
@@ -9,10 +10,16 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/modules/media"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/security"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func Register(router *gin.Engine, ctx *app.AppContext) {
 	api := router.Group("/api")
+
+	// Swagger Route
+	// Access at: http://localhost:8080/swagger/index.html
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.PersistAuthorization(true)))
 
 	// ----------------------- Set up (Wiring) ----------------------- //
 	// health

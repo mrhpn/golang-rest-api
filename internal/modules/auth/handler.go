@@ -23,6 +23,19 @@ func NewHandler(authService Service, ctx *app.AppContext) *Handler {
 	}
 }
 
+// Login godoc
+//
+//	@Summary		User Login
+//	@Description	Authenticates a user and returns access token in response and set refresh token in httpOnly cookie
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		LoginRequest	true	"Login Credentials"
+//	@Success		200		{object}	LoginResponse
+//	@Failure		400		{object}	httpx.ErrorResponse
+//	@Failure		401		{object}	httpx.ErrorResponse
+//	@Failure		500		{object}	httpx.ErrorResponse
+//	@Router			/login [post]
 func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := httpx.BindJSON(c, &req); err != nil {
@@ -59,6 +72,18 @@ func (h *Handler) Login(c *gin.Context) {
 		}})
 }
 
+// Refresh token godoc
+//
+//	@Summary		Refresh token
+//	@Description	Generate a new access token, request must have valid refresh token in cookie
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	RefreshTokenResponse
+//	@Failure		400	{object}	httpx.ErrorResponse
+//	@Failure		401	{object}	httpx.ErrorResponse
+//	@Failure		500	{object}	httpx.ErrorResponse
+//	@Router			/auth/refresh [post]
 func (h *Handler) Refresh(c *gin.Context) {
 	// read form cookie instead of json body
 	refreshToken, err := c.Cookie(RefreshTokenCookieName)

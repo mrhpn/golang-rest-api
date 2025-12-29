@@ -15,6 +15,20 @@ func NewHandler(userService Service) *Handler {
 	return &Handler{userService: userService}
 }
 
+// Create user godoc
+//
+//	@Summary		Create user
+//	@Description	Create a user
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		CreateUserRequest	true	"CreateUserRequest"
+//	@Success		201		{object}	users.UserResponse
+//	@Failure		400		{object}	httpx.ErrorResponse
+//	@Failure		401		{object}	httpx.ErrorResponse
+//	@Failure		500		{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/users [post]
 func (h *Handler) Create(c *gin.Context) {
 	var req CreateUserRequest
 	if err := httpx.BindJSON(c, &req); err != nil {
@@ -35,6 +49,20 @@ func (h *Handler) Create(c *gin.Context) {
 	)
 }
 
+// Get a user godoc
+//
+//	@Summary		Get user
+//	@Description	Get a user by their ULID
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"User ID"
+//	@Success		201	{object}	users.UserResponse
+//	@Failure		400	{object}	httpx.ErrorResponse
+//	@Failure		401	{object}	httpx.ErrorResponse
+//	@Failure		500	{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/users/{id} [get]
 func (h *Handler) Get(c *gin.Context) {
 	var params IDParam
 
@@ -56,6 +84,20 @@ func (h *Handler) Get(c *gin.Context) {
 	)
 }
 
+// Delete a user godoc
+//
+//	@Summary		Delete user
+//	@Description	Delete a user by their ULID
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path	string	true	"User ID"
+//	@Success		204
+//	@Failure		400	{object}	httpx.ErrorResponse
+//	@Failure		401	{object}	httpx.ErrorResponse
+//	@Failure		500	{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/users/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
 	var params IDParam
 
@@ -72,6 +114,20 @@ func (h *Handler) Delete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// Restore a deleted user godoc
+//
+//	@Summary		Restore user
+//	@Description	Restore a deleted user by their ULID
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path	string	true	"User ID"
+//	@Success		200
+//	@Failure		400	{object}	httpx.ErrorResponse
+//	@Failure		401	{object}	httpx.ErrorResponse
+//	@Failure		500	{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/users/{id}/restore [put]
 func (h *Handler) Restore(c *gin.Context) {
 	var params IDParam
 
