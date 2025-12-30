@@ -15,6 +15,9 @@ type mappedError struct {
 	Fields  map[string]string // optional field-specific errors (used in validations)
 }
 
+// MapError maps an error to an HTTP response structure
+// It sanitizes internal errors and ensures client-safe messages
+// Note: Error logging is handled in FailWithError to include request context
 func MapError(err error) mappedError {
 	var appErr *domain.AppError
 
@@ -28,7 +31,7 @@ func MapError(err error) mappedError {
 		}
 	}
 
-	// 2. Fallback: catch statndard GORM errors that escaped the repo
+	// 2. Fallback: catch standard GORM errors that escaped the repo
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return mappedError{
 			Status:  http.StatusNotFound,
@@ -38,10 +41,11 @@ func MapError(err error) mappedError {
 	}
 
 	// 3. Ultimate Fallback: actual 500
+	// This should rarely happen if all errors are properly wrapped
 	return mappedError{
 		Status:  http.StatusInternalServerError,
 		Code:    "INTERNAL_ERROR",
-		Message: "❌ internal server error",
+		Message: "internal server error",
 	}
 }
 

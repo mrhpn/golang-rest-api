@@ -1,6 +1,9 @@
 package httpx
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+)
 
 // SuccessResponse defines the standard structure for successful API responses
 type SuccessResponse struct {
@@ -40,6 +43,7 @@ func OKWithMeta(c *gin.Context, status int, data any, meta any) {
 }
 
 // Fail sends a manual error response
+// Use this when need to construct an error response manually
 func Fail(c *gin.Context, status int, code string, message string, fields map[string]string) {
 	c.JSON(status, ErrorResponse{
 		Success: false,
@@ -49,11 +53,34 @@ func Fail(c *gin.Context, status int, code string, message string, fields map[st
 			Fields:  fields,
 		},
 	})
+	c.Abort()
 }
 
 // FailWithError maps an internal error to an HTTP error response
+// This is the preferred method for handling errors in handlers
+// It automatically logs errors and maps them to appropriate HTTP responses
 func FailWithError(c *gin.Context, err error) {
 	mapped := MapError(err)
+
+	// Log error with request context (request_id is already in context from RequestID middleware)
+	logger := log.Ctx(c.Request.Context())
+
+	// Log based on severity:
+	// - 5xx errors: log as Error (server issues)
+	// - 4xx errors: log as Warn (client issues, but useful for debugging)
+	// - Unexpected errors: always log as Error
+	logEvent := logger.Error()
+	if mapped.Status < 500 {
+		logEvent = logger.Warn()
+	}
+
+	logEvent.
+		Err(err).
+		Int("status_code", mapped.Status).
+		Str("error_code", mapped.Code).
+		Str("path", c.Request.URL.Path).
+		Str("method", c.Request.Method).
+		Msg("request failed")
 
 	Fail(
 		c,

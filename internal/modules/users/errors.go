@@ -9,6 +9,12 @@ var (
 		"internal server error",
 	)
 
+	ErrDatabaseError = errors.New(
+		errors.Internal,
+		"DATABASE_ERROR",
+		"failed to perform database operation",
+	)
+
 	ErrInvalidID = errors.New(
 		errors.InvalidInput,
 		"INVALID_ID_FORMAT",

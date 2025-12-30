@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	appErr "github.com/mrhpn/go-rest-api/internal/errors"
 )
 
 type minioService struct {
@@ -71,7 +72,12 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (
 
 	src, err := file.Open()
 	if err != nil {
-		return "", fmt.Errorf("failed to open uploaded file: %w", err)
+		return "", appErr.Wrap(
+			appErr.Internal,
+			ErrFileOpen.Code,
+			ErrFileOpen.Message,
+			err,
+		)
 	}
 	defer src.Close()
 
@@ -99,6 +105,7 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (
 			contentType = "image/jpeg"
 			ext = ".jpg"
 		}
+		// Note: If image processing fails, we continue with the original file
 	}
 
 	// 4. construct the obj name
@@ -108,7 +115,12 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (
 		ContentType: contentType,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to upload object to minio: %w", err)
+		return "", appErr.Wrap(
+			appErr.Internal,
+			ErrUploadToStorage.Code,
+			ErrUploadToStorage.Message,
+			err,
+		)
 	}
 
 	return fmt.Sprintf("/%s", objectName), nil
@@ -122,11 +134,20 @@ func (s *minioService) HealthCheck(ctx context.Context) error {
 	// Check if bucket exists and is accessible
 	exists, err := s.client.BucketExists(ctx, s.bucketName)
 	if err != nil {
-		return fmt.Errorf("failed to check minio bucket existence: %w", err)
+		return appErr.Wrap(
+			appErr.Internal,
+			ErrStorageHealthCheck.Code,
+			ErrStorageHealthCheck.Message,
+			err,
+		)
 	}
 
 	if !exists {
-		return fmt.Errorf("minio bucket '%s' does not exist", s.bucketName)
+		return appErr.New(
+			appErr.Internal,
+			ErrStorageBucketMissing.Code,
+			ErrStorageBucketMissing.Message,
+		)
 	}
 
 	return nil

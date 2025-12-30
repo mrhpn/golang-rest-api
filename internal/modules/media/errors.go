@@ -33,4 +33,28 @@ var (
 		"FILE_TOO_LARGE",
 		"file too large",
 	)
+
+	ErrFileOpen = errors.New(
+		errors.Internal,
+		"FILE_OPEN_ERROR",
+		"failed to process uploaded file",
+	)
+
+	ErrUploadToStorage = errors.New(
+		errors.Internal,
+		"STORAGE_UPLOAD_ERROR",
+		"failed to upload file to storage",
+	)
+
+	ErrStorageHealthCheck = errors.New(
+		errors.Internal,
+		"STORAGE_HEALTH_CHECK_ERROR",
+		"storage health check failed",
+	)
+
+	ErrStorageBucketMissing = errors.New(
+		errors.Internal,
+		"STORAGE_BUCKET_MISSING",
+		"storage bucket missing",
+	)
 )

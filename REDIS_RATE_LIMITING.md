@@ -2,7 +2,8 @@
 
 ## Overview
 
-This implementation addresses all three critical issues with in-memory rate limiting:
+This implementation addresses all three critical issues with in-memory rate
+limiting:
 
 1. ✅ **Multi-Instance Isolation**: Shared Redis state across all replicas
 2. ✅ **Fixed Window Bursting**: Sliding window algorithm prevents edge attacks
@@ -47,8 +48,10 @@ RATE_LIMIT_WINDOW_SECOND=60  # Window in seconds
 
 ### Fallback Behavior
 
-- If Redis is disabled or unavailable, the system falls back to in-memory rate limiting
-- A warning is logged when falling back (not suitable for multi-instance deployments)
+- If Redis is disabled or unavailable, the system falls back to in-memory rate
+  limiting
+- A warning is logged when falling back (not suitable for multi-instance
+  deployments)
 
 ## HTTP Headers
 
@@ -73,16 +76,19 @@ X-RateLimit-Reset: 1704067200
 #### Cloud Provider Options
 
 1. **AWS ElastiCache (Redis)**
+
    - **t3.micro**: ~$15/month (development)
    - **t3.small**: ~$30/month (small production)
    - **t3.medium**: ~$60/month (medium production)
    - **Memory optimized**: $100-500+/month (high traffic)
 
 2. **Google Cloud Memorystore**
+
    - **Basic tier**: ~$30-100/month
    - **Standard tier**: ~$100-500+/month
 
 3. **Azure Cache for Redis**
+
    - **Basic C0**: ~$15/month
    - **Standard C1**: ~$60/month
    - **Premium**: $200+/month
@@ -94,19 +100,22 @@ X-RateLimit-Reset: 1704067200
 
 #### Cost Optimization Tips
 
-1. **Use Redis for Multiple Purposes**: 
+1. **Use Redis for Multiple Purposes**:
+
    - Rate limiting
    - Session storage
    - Caching
    - Job queues
    - This spreads the cost across features
 
-2. **Start Small**: 
+2. **Start Small**:
+
    - Begin with smallest instance
    - Monitor memory usage
    - Scale up only when needed
 
 3. **Use Redis Cluster for High Availability**:
+
    - Only if you need 99.99% uptime
    - Adds ~2x cost
 
@@ -118,6 +127,7 @@ X-RateLimit-Reset: 1704067200
 ### Memory Usage
 
 For rate limiting alone:
+
 - **Per IP**: ~100-200 bytes per active IP
 - **10,000 active IPs**: ~1-2 MB
 - **100,000 active IPs**: ~10-20 MB
@@ -150,6 +160,7 @@ Redis is very memory-efficient for this use case.
 #### Mitigation Strategies
 
 1. **Fail-Open**: If Redis fails, allow requests (current implementation)
+
    - Alternative: Fail-closed (reject all requests if Redis down)
    - Choose based on your security requirements
 
@@ -159,15 +170,15 @@ Redis is very memory-efficient for this use case.
 
 ## Comparison: In-Memory vs Redis
 
-| Feature | In-Memory | Redis |
-|---------|-----------|-------|
-| **Multi-Instance** | ❌ No | ✅ Yes |
+| Feature            | In-Memory       | Redis           |
+| ------------------ | --------------- | --------------- |
+| **Multi-Instance** | ❌ No           | ✅ Yes          |
 | **Sliding Window** | ❌ Fixed window | ✅ True sliding |
-| **Reset Header** | ❌ Missing | ✅ Included |
-| **Cost** | Free | $15-100+/month |
-| **Latency** | < 0.1ms | < 1-5ms |
-| **Scalability** | Limited | Unlimited |
-| **Persistence** | ❌ No | ✅ Optional |
+| **Reset Header**   | ❌ Missing      | ✅ Included     |
+| **Cost**           | Free            | $15-100+/month  |
+| **Latency**        | < 0.1ms         | < 1-5ms         |
+| **Scalability**    | Limited         | Unlimited       |
+| **Persistence**    | ❌ No           | ✅ Optional     |
 
 ## When to Use Redis
 
@@ -206,6 +217,7 @@ Redis is very memory-efficient for this use case.
 ### Health Checks
 
 The readiness probe should check Redis connectivity:
+
 ```go
 // Add to health check
 if ctx.Redis != nil {
@@ -227,12 +239,13 @@ if ctx.Redis != nil {
 
 ## Conclusion
 
-Redis-based rate limiting is **essential for production multi-instance deployments**. The cost (~$15-100/month) is minimal compared to the benefits:
+Redis-based rate limiting is **essential for production multi-instance
+deployments**. The cost (~$15-100/month) is minimal compared to the benefits:
 
 - ✅ Prevents bypassing rate limits across instances
 - ✅ Prevents burst attacks
 - ✅ Provides proper client feedback
 - ✅ Enables horizontal scaling
 
-For single-instance deployments or very low traffic, in-memory rate limiting may be sufficient, but Redis is recommended for any production API.
-
+For single-instance deployments or very low traffic, in-memory rate limiting may
+be sufficient, but Redis is recommended for any production API.

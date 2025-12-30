@@ -9,6 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/httpx"
+	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/security"
 	"github.com/rs/zerolog/log"
 )
@@ -23,7 +25,13 @@ func RequireAuth(ctx *app.AppContext) gin.HandlerFunc {
 		// 1. check for Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized: missing token"})
+			httpx.Fail(
+				c,
+				http.StatusUnauthorized,
+				auth.ErrUnauthorized.Code,
+				auth.ErrUnauthorized.Message,
+				nil,
+			)
 			return
 		}
 
@@ -32,7 +40,8 @@ func RequireAuth(ctx *app.AppContext) gin.HandlerFunc {
 		// 2. parse and validate JWT
 		claims, err := ctx.SecurityHandler.ValidateToken(tokenString)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			// Map security errors to proper HTTP responses
+			httpx.FailWithError(c, err)
 			return
 		}
 
@@ -65,7 +74,13 @@ func AllowRoles(allowedRoles ...security.Role) gin.HandlerFunc {
 		val := c.Request.Context().Value(userKey)
 		claims, ok := val.(*security.UserClaims)
 		if !ok || claims == nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "identity not found in context"})
+			httpx.Fail(
+				c,
+				http.StatusInternalServerError,
+				auth.ErrIdentityNotFoundInContext.Code,
+				auth.ErrIdentityNotFoundInContext.Message,
+				nil,
+			)
 			return
 		}
 
@@ -77,7 +92,13 @@ func AllowRoles(allowedRoles ...security.Role) gin.HandlerFunc {
 				Interface("required_roles", allowedRoles).
 				Msg("access denied due to insufficient role")
 
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden: insufficient permissions"})
+			httpx.Fail(
+				c,
+				http.StatusForbidden,
+				auth.ErrForbidden.Code,
+				auth.ErrForbidden.Message,
+				nil,
+			)
 			return
 		}
 

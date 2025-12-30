@@ -15,6 +15,30 @@ var (
 		"invalid id format",
 	)
 
+	ErrIdentityNotFoundInContext = errors.New(
+		errors.Internal,
+		"INTERNAL_ERROR",
+		"identity not found in context",
+	)
+
+	ErrUnauthorized = errors.New(
+		errors.Unauthorized,
+		"UNAUTHORIZED",
+		"unauthorized: missing token",
+	)
+
+	ErrForbidden = errors.New(
+		errors.Forbidden,
+		"FORBIDDEN",
+		"forbidden: insufficient permissions",
+	)
+
+	ErrRefreshTokenMissing = errors.New(
+		errors.Unauthorized,
+		"REFRESH_TOKEN_MISSING",
+		"refresh token missing",
+	)
+
 	ErrInvalidCrendentials = errors.New(
 		errors.Unauthorized,
 		"INVALID_CRENDENTIALS",

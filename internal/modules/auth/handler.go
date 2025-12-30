@@ -35,7 +35,7 @@ func NewHandler(authService Service, ctx *app.AppContext) *Handler {
 //	@Failure		400		{object}	httpx.ErrorResponse
 //	@Failure		401		{object}	httpx.ErrorResponse
 //	@Failure		500		{object}	httpx.ErrorResponse
-//	@Router			/login [post]
+//	@Router			/auth/login [post]
 func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := httpx.BindJSON(c, &req); err != nil {
@@ -88,7 +88,13 @@ func (h *Handler) Refresh(c *gin.Context) {
 	// read form cookie instead of json body
 	refreshToken, err := c.Cookie(RefreshTokenCookieName)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "refresh token missing"})
+		httpx.Fail(
+			c,
+			http.StatusUnauthorized,
+			ErrRefreshTokenMissing.Code,
+			ErrRefreshTokenMissing.Message,
+			nil,
+		)
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	appErr "github.com/mrhpn/go-rest-api/internal/errors"
 	"gorm.io/gorm"
 )
 
@@ -24,7 +25,17 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, user *User) error {
-	return r.db.WithContext(ctx).Create(user).Error
+	err := r.db.WithContext(ctx).Create(user).Error
+	if err != nil {
+		// Wrap database errors to preserve context while maintaining client-safe messages
+		return appErr.Wrap(
+			appErr.Internal,
+			ErrDatabaseError.Code,
+			"failed to create user",
+			err,
+		)
+	}
+	return nil
 }
 
 func (r *repository) FindById(ctx context.Context, id string) (*User, error) {
@@ -35,7 +46,13 @@ func (r *repository) FindById(ctx context.Context, id string) (*User, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
 		}
-		return nil, err // db issue
+		// Wrap database errors to preserve context
+		return nil, appErr.Wrap(
+			appErr.Internal,
+			ErrDatabaseError.Code,
+			"failed to find user",
+			err,
+		)
 	}
 
 	return &user, nil
@@ -49,7 +66,13 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*User, erro
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
 		}
-		return nil, err // db issue
+		// Wrap database errors to preserve context
+		return nil, appErr.Wrap(
+			appErr.Internal,
+			ErrDatabaseError.Code,
+			"failed to find user",
+			err,
+		)
 	}
 
 	return &user, nil
@@ -57,7 +80,15 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*User, erro
 
 func (r *repository) Delete(ctx context.Context, id string) (int64, error) {
 	result := r.db.WithContext(ctx).Delete(&User{}, "id = ?", id)
-	return result.RowsAffected, result.Error
+	if result.Error != nil {
+		return 0, appErr.Wrap(
+			appErr.Internal,
+			ErrDatabaseError.Code,
+			"failed to delete user",
+			result.Error,
+		)
+	}
+	return result.RowsAffected, nil
 }
 
 func (r *repository) Restore(ctx context.Context, id string) (int64, error) {
@@ -67,5 +98,14 @@ func (r *repository) Restore(ctx context.Context, id string) (int64, error) {
 		Where("id = ?", id).
 		Update("deleted_at", nil)
 
-	return result.RowsAffected, result.Error
+	if result.Error != nil {
+		return 0, appErr.Wrap(
+			appErr.Internal,
+			ErrDatabaseError.Code,
+			"failed to restore user",
+			result.Error,
+		)
+	}
+
+	return result.RowsAffected, nil
 }

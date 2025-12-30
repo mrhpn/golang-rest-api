@@ -115,6 +115,41 @@ info:
   title: Go REST API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns access token in response and set
+        refresh token in httpOnly cookie
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      summary: User Login
+      tags:
+      - Auth
   /auth/refresh:
     post:
       consumes:
@@ -186,41 +221,6 @@ paths:
       summary: Check readiness
       tags:
       - Health
-  /login:
-    post:
-      consumes:
-      - application/json
-      description: Authenticates a user and returns access token in response and set
-        refresh token in httpOnly cookie
-      parameters:
-      - description: Login Credentials
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/auth.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/auth.LoginResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/httpx.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/httpx.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/httpx.ErrorResponse'
-      summary: User Login
-      tags:
-      - Auth
   /media/upload/profile:
     post:
       consumes:
