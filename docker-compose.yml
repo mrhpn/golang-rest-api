@@ -11,10 +11,17 @@ services:
     environment:
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}?sslmode=disable
       - STORAGE_HOST=minio:9000
+      - REDIS_ENABLED=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_DB=0
     depends_on:
       db:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - app_network
@@ -58,9 +65,38 @@ services:
     networks:
       - app_network
 
+  redis:
+    image: redis:7-alpine
+    container_name: app_redis
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    command: >
+      sh -c "if [ -n \"$$REDIS_PASSWORD\" ]; then
+        redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\"
+      else
+        redis-server --appendonly yes
+      fi"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: >
+        sh -c "if [ -n \"$$REDIS_PASSWORD\" ]; then
+          redis-cli -a \"$$REDIS_PASSWORD\" ping
+        else
+          redis-cli ping
+        fi"
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app_network
+
 volumes:
   db_data:
   minio_data:
+  redis_data:
 
 networks:
   app_network:

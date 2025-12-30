@@ -48,12 +48,9 @@ func setupRouter(ctx *app.AppContext) *gin.Engine {
 	router.Use(middlewares.Timeout(requestTimeout))
 
 	// Rate limiting middleware (if enabled)
+	// Uses Redis if available, falls back to in-memory if not
 	if ctx.Cfg.RateLimit.Enabled {
-		rateLimitWindow := time.Duration(ctx.Cfg.RateLimit.Window) * time.Second
-		if rateLimitWindow <= 0 {
-			rateLimitWindow = time.Minute
-		}
-		router.Use(middlewares.RateLimit(ctx.Cfg.RateLimit.Rate, rateLimitWindow))
+		router.Use(middlewares.RateLimitRedis(ctx))
 	}
 
 	// register all module routes

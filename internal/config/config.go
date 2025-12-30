@@ -13,6 +13,7 @@ type Config struct {
 	Http      HttpConfig
 	RateLimit RateLimitConfig
 	DB        DBConfig
+	Redis     RedisConfig
 	JWT       JWTConfig
 	Log       LogConfig
 	Storage   MinioConfig
@@ -39,6 +40,14 @@ type DBConfig struct {
 	QueryTimeoutSecond    int // query timeout in seconds
 	RetryAttempts         int // number of retry attempts
 	RetryDelaySecond      int // retry delay in seconds
+}
+
+type RedisConfig struct {
+	Enabled  bool
+	Host     string
+	Port     string
+	Password string
+	DB       int // Redis database number (0-15)
 }
 
 type JWTConfig struct {
@@ -87,7 +96,7 @@ func MustLoad() *Config {
 		RateLimit: RateLimitConfig{
 			Enabled:  getEnvAsBool("RATE_LIMIT_ENABLED", true),
 			Rate:     getEnvAsInt("RATE_LIMIT_RATE", 100),
-			AuthRate: getEnvAsInt("RAGE_LIMIT_AUTH_RATE", 7),
+			AuthRate: getEnvAsInt("RATE_LIMIT_AUTH_RATE", 5),
 			Window:   getEnvAsInt("RATE_LIMIT_WINDOW_SECOND", 60),
 		},
 
@@ -99,6 +108,16 @@ func MustLoad() *Config {
 			QueryTimeoutSecond:    getEnvAsInt("DB_QUERY_TIMEOUT_SECOND", 30),
 			RetryAttempts:         getEnvAsInt("DB_RETRY_ATTEMPTS", 3),
 			RetryDelaySecond:      getEnvAsInt("DB_RETRY_DELAY_SECOND", 2),
+		},
+
+		Redis: RedisConfig{
+			// Default to enabled in production (can be overridden via env)
+			// In Docker, this will be enabled via environment variable
+			Enabled:  getEnvAsBool("REDIS_ENABLED", false),
+			Host:     getEnv("REDIS_HOST", "localhost"),
+			Port:     getEnv("REDIS_PORT", "6379"),
+			Password: getEnv("REDIS_PASSWORD", ""),
+			DB:       getEnvAsInt("REDIS_DB", 0),
 		},
 
 		JWT: JWTConfig{

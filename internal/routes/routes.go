@@ -18,6 +18,11 @@ import (
 )
 
 func Register(router *gin.Engine, ctx *app.AppContext) {
+	authRateLimitCount := ctx.Cfg.RateLimit.AuthRate
+	if authRateLimitCount <= 0 {
+		authRateLimitCount = 5 // Default: 5 requests per minute for auth endpoints
+	}
+
 	// API versioning: v1 is the current version
 	api := router.Group("/api/v1")
 
@@ -60,8 +65,9 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 	api.GET("/health/ready", healthH.Readiness)
 
 	// ----------------------- auth ----------------------- //
+	// Apply stricter rate limiting for auth endpoints using Redis
 	authGroup := api.Group("/auth")
-	authGroup.Use(middlewares.RateLimit(ctx.Cfg.RateLimit.AuthRate, time.Minute))
+	authGroup.Use(middlewares.RateLimitRedisWithConfig(ctx, authRateLimitCount, time.Minute))
 	{
 		authGroup.POST("/login", authH.Login)
 		authGroup.POST("/refresh", authH.Refresh)

@@ -90,6 +90,25 @@ func (h *Handler) Readiness(c *gin.Context) {
 		allHealthy = false
 	}
 
+	// Check Redis connectivity (if enabled)
+	if h.appCtx.Cfg.Redis.Enabled {
+		if h.appCtx.Redis != nil {
+			if err := h.appCtx.Redis.Ping(ctx).Err(); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("redis health check failed")
+				checks["redis"] = "unhealthy: " + err.Error()
+				allHealthy = false
+			} else {
+				checks["redis"] = "healthy"
+			}
+		} else {
+			checks["redis"] = "unhealthy: redis client not initialized"
+			allHealthy = false
+		}
+	} else {
+		checks["redis"] = "disabled"
+		// Redis is optional, so we don't mark as unhealthy if disabled
+	}
+
 	status := "ready"
 	httpStatus := http.StatusOK
 	if !allHealthy {
