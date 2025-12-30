@@ -113,3 +113,21 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (
 
 	return fmt.Sprintf("/%s", objectName), nil
 }
+
+// HealthCheck verifies that MinIO is accessible and the bucket exists
+func (s *minioService) HealthCheck(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// Check if bucket exists and is accessible
+	exists, err := s.client.BucketExists(ctx, s.bucketName)
+	if err != nil {
+		return fmt.Errorf("failed to check minio bucket existence: %w", err)
+	}
+
+	if !exists {
+		return fmt.Errorf("minio bucket '%s' does not exist", s.bucketName)
+	}
+
+	return nil
+}

@@ -64,16 +64,17 @@ func NewHandler(mediaService Service) *Handler {
 }
 
 // UploadProfilePicture godoc
-// @Summary      Upload profile picture
-// @Description  Upload an image file to be used as a profile picture. Max 5MB.
-// @Tags         Media
-// @Accept       multipart/form-data
-// @Produce      json
-// @Param        file  formData  file  true  "Image file (jpg, jpeg, png)"
-// @Success      201   {object}  httpx.SuccessResponse{data=map[string]string}
-// @Failure      400   {object}  httpx.ErrorResponse
-// @Security     BearerAuth
-// @Router       /media/upload/profile [post]
+//
+//	@Summary		Upload profile picture
+//	@Description	Upload an image file to be used as a profile picture. Max 5MB.
+//	@Tags			Media
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			file	formData	file	true	"Image file (jpg, jpeg, png)"
+//	@Success		201		{object}	httpx.SuccessResponse{data=map[string]string}
+//	@Failure		400		{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/media/upload/profile [post]
 func (h *Handler) UploadProfilePicture(c *gin.Context) {
 	h.handleUpload(c, FileCategoryProfiles, FileTypeImage)
 }

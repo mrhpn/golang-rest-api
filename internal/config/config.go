@@ -7,14 +7,38 @@ import (
 )
 
 type Config struct {
-	AppEnv             string
-	Port               string
-	DBUrl              string
-	AllowedOrigins     []string
-	MaxRequestBodySize int64
-	JWT                JWTConfig
-	Log                LogConfig
-	Storage            MinioConfig
+	AppEnv    string
+	Port      string
+	DBUrl     string
+	Http      HttpConfig
+	RateLimit RateLimitConfig
+	DB        DBConfig
+	JWT       JWTConfig
+	Log       LogConfig
+	Storage   MinioConfig
+}
+
+type HttpConfig struct {
+	AllowedOrigins       []string
+	MaxRequestBodySize   int64
+	RequestTimeoutSecond int
+}
+
+type RateLimitConfig struct {
+	Enabled  bool
+	Rate     int // requests per window
+	AuthRate int
+	Window   int // window in seconds
+}
+
+type DBConfig struct {
+	MaxOpenConns          int // maximum open connections
+	MaxIdleConns          int // maximum idle connections
+	ConnMaxLifetimeMinute int // connection max lifetime in minutes
+	ConnMaxIdleTimeMinute int // connection max idle time in minutes
+	QueryTimeoutSecond    int // query timeout in seconds
+	RetryAttempts         int // number of retry attempts
+	RetryDelaySecond      int // retry delay in seconds
 }
 
 type JWTConfig struct {
@@ -50,11 +74,32 @@ func MustLoad() *Config {
 	}
 
 	cfg := &Config{
-		AppEnv:             getEnv("APP_ENV", "development"),
-		Port:               getEnv("APP_PORT", "8080"),
-		DBUrl:              getEnv("DATABASE_URL", ""),
-		AllowedOrigins:     allowedOrigins,
-		MaxRequestBodySize: int64(getEnvAsInt("MAX_REQUEST_BODY_SIZE_MB", 50)) * 1024 * 1024,
+		AppEnv: getEnv("APP_ENV", "development"),
+		Port:   getEnv("APP_PORT", "8080"),
+		DBUrl:  getEnv("DATABASE_URL", ""),
+
+		Http: HttpConfig{
+			AllowedOrigins:       allowedOrigins,
+			MaxRequestBodySize:   int64(getEnvAsInt("MAX_REQUEST_BODY_SIZE_MB", 50)) * 1024 * 1024,
+			RequestTimeoutSecond: getEnvAsInt("REQUEST_TIMEOUT_SECOND", 30),
+		},
+
+		RateLimit: RateLimitConfig{
+			Enabled:  getEnvAsBool("RATE_LIMIT_ENABLED", true),
+			Rate:     getEnvAsInt("RATE_LIMIT_RATE", 100),
+			AuthRate: getEnvAsInt("RAGE_LIMIT_AUTH_RATE", 7),
+			Window:   getEnvAsInt("RATE_LIMIT_WINDOW_SECOND", 60),
+		},
+
+		DB: DBConfig{
+			MaxOpenConns:          getEnvAsInt("DB_MAX_OPEN_CONNS", 25),
+			MaxIdleConns:          getEnvAsInt("DB_MAX_IDLE_CONNS", 10),
+			ConnMaxLifetimeMinute: getEnvAsInt("DB_CONN_MAX_LIFETIME_MINUTE", 60),
+			ConnMaxIdleTimeMinute: getEnvAsInt("DB_CONN_MAX_IDLE_TIME_MINUTE", 30),
+			QueryTimeoutSecond:    getEnvAsInt("DB_QUERY_TIMEOUT_SECOND", 30),
+			RetryAttempts:         getEnvAsInt("DB_RETRY_ATTEMPTS", 3),
+			RetryDelaySecond:      getEnvAsInt("DB_RETRY_DELAY_SECOND", 2),
+		},
 
 		JWT: JWTConfig{
 			Secret:                       getEnv("JWT_SECRET", ""),

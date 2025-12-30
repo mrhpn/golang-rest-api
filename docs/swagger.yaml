@@ -1,4 +1,4 @@
-basePath: /api
+basePath: /api/v1
 definitions:
   auth.LoginRequest:
     properties:
@@ -20,6 +20,17 @@ definitions:
   auth.RefreshTokenResponse:
     properties:
       access_token:
+        type: string
+    type: object
+  health.HealthResponse:
+    properties:
+      checks:
+        additionalProperties:
+          type: string
+        type: object
+      status:
+        type: string
+      timestamp:
         type: string
     type: object
   httpx.ErrorBlock:
@@ -134,17 +145,45 @@ paths:
       - Auth
   /health:
     get:
-      description: Check health status of server
+      description: Check health status of server (liveness probe)
       produces:
       - application/json
       responses:
         "200":
-          description: 'Returns {"status": "healthy"}'
+          description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/health.HealthResponse'
       summary: Check health
+      tags:
+      - Health
+  /health/live:
+    get:
+      description: Check if service is alive (liveness probe)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.HealthResponse'
+      summary: Check liveness
+      tags:
+      - Health
+  /health/ready:
+    get:
+      description: Check if service is ready to accept traffic (readiness probe)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/health.HealthResponse'
+      summary: Check readiness
       tags:
       - Health
   /login:

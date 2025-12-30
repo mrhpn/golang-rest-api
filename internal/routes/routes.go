@@ -1,9 +1,12 @@
 package routes
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	_ "github.com/mrhpn/go-rest-api/docs"
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/middlewares"
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
@@ -15,7 +18,8 @@ import (
 )
 
 func Register(router *gin.Engine, ctx *app.AppContext) {
-	api := router.Group("/api")
+	// API versioning: v1 is the current version
+	api := router.Group("/api/v1")
 
 	// Swagger Route
 	// Access at: http://localhost:8080/swagger/index.html
@@ -23,7 +27,7 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 
 	// ----------------------- Set up (Wiring) ----------------------- //
 	// health
-	healthH := health.NewHandler()
+	healthH := health.NewHandler(ctx)
 
 	// users
 	userR := users.NewRepository(ctx.DB)
@@ -45,11 +49,23 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 	// ----------------------- ROUTES ----------------------- //
 
 	// ----------------------- health ----------------------- //
+	// Health endpoints (outside /api for Kubernetes/Docker health checks)
+	router.GET("/health", healthH.Check)
+	router.GET("/health/live", healthH.Liveness)
+	router.GET("/health/ready", healthH.Readiness)
+
+	// Also expose under /api/v1 for consistency
 	api.GET("/health", healthH.Check)
+	api.GET("/health/live", healthH.Liveness)
+	api.GET("/health/ready", healthH.Readiness)
 
 	// ----------------------- auth ----------------------- //
-	api.POST("/login", authH.Login)
-	api.POST("/auth/refresh", authH.Refresh)
+	authGroup := api.Group("/auth")
+	authGroup.Use(middlewares.RateLimit(ctx.Cfg.RateLimit.AuthRate, time.Minute))
+	{
+		authGroup.POST("/login", authH.Login)
+		authGroup.POST("/refresh", authH.Refresh)
+	}
 
 	// ----------------------- users ----------------------- //
 	usersGroup := api.Group("/users")

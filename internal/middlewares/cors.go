@@ -14,16 +14,16 @@ func CORS(ctx *app.AppContext) gin.HandlerFunc {
 		allowOrigin := ""
 
 		// determine if the origin is allowed
-		if len(ctx.Cfg.AllowedOrigins) > 0 && ctx.Cfg.AllowedOrigins[0] == "*" {
+		if len(ctx.Cfg.Http.AllowedOrigins) > 0 && ctx.Cfg.Http.AllowedOrigins[0] == "*" {
 			allowOrigin = origin // !use origin, instead of "*"
-		} else if slices.Contains(ctx.Cfg.AllowedOrigins, origin) {
+		} else if slices.Contains(ctx.Cfg.Http.AllowedOrigins, origin) {
 			allowOrigin = origin
 		}
 
 		// set headers if allowed
 		if allowOrigin != "" {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-			c.Writer.Header().Set("Access-Control-Allow-Crendentials", "true")
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Request-ID")
 			c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
 		}

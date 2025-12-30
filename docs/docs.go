@@ -67,7 +67,7 @@ const docTemplate = `{
         },
         "/health": {
             "get": {
-                "description": "Check health status of server",
+                "description": "Check health status of server (liveness probe)",
                 "produces": [
                     "application/json"
                 ],
@@ -77,12 +77,55 @@ const docTemplate = `{
                 "summary": "Check health",
                 "responses": {
                     "200": {
-                        "description": "Returns {\"status\": \"healthy\"}",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/health.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/live": {
+            "get": {
+                "description": "Check if service is alive (liveness probe)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Check liveness",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/health.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/ready": {
+            "get": {
+                "description": "Check if service is ready to accept traffic (readiness probe)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Check readiness",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/health.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     }
                 }
@@ -448,6 +491,23 @@ const docTemplate = `{
                 }
             }
         },
+        "health.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "checks": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
         "httpx.ErrorBlock": {
             "type": "object",
             "properties": {
@@ -562,7 +622,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Go REST API",
 	Description:      "A production-ready REST API boilerplate with Gin, GORM, and MinIO.",
