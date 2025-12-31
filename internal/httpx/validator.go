@@ -6,6 +6,7 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+// RegisterValidators registers validators used in http-request steps
 func RegisterValidators() {
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		// Register custom validators here

@@ -1,0 +1,201 @@
+# golangci-lint configuration file
+# Compatible with golangci-lint v2.x
+version: 2
+
+run:
+  # Timeout for analysis
+  timeout: 5m
+
+  # Include test files
+  tests: true
+
+  # Skip directories
+  skip-dirs:
+    - vendor
+    - tmp
+    - bin
+    - logs
+    - docs
+
+  # Skip files
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*\\.gen\\.go$"
+
+# Output configuration
+output:
+  # Colored output format
+  format: colored-line-number
+  # Print linter name in issue line
+  print-issued-lines: true
+  # Print linter name in unused line
+  print-linter-name: true
+
+# Linters configuration
+linters:
+  # Enable specific linters (production-grade set)
+  enable:
+    - errcheck # Check for unchecked errors
+    - errorlint # Error handling best practices
+    - gosec # Security issues
+    - govet # Go vet checks
+    - ineffassign # Detect ineffectual assignments
+    - misspell # Spelling mistakes
+    - nakedret # Naked returns
+    - nilerr # Detect nil errors
+    - noctx # Missing context in function signatures
+    - nolintlint # Check nolint directives
+    - revive # Fast, configurable linter
+    - staticcheck # Static analysis
+    - unconvert # Unnecessary conversions
+    - unparam # Unused parameters
+    - unused # Unused code
+    - whitespace # Trailing whitespace
+
+# Linters settings
+linters-settings:
+  errcheck:
+    # Report about not checking of errors in type assertions
+    check-type-assertions: true
+    # Report about assignment of errors to blank identifier
+    check-blank: true
+    # Report about not checking of errors in if conditions
+    check-assertions: true
+
+  errorlint:
+    # Check whether fmt.Errorf uses the %w verb for formatting errors
+    errorf: true
+    # Check for error type assertions
+    asserts: true
+    # Check for error comparisons
+    comparison: true
+
+  gosec:
+    # Include test files
+    tests: true
+    # Severity of issues: low, medium, high
+    severity: medium
+    # Confidence of issues: low, medium, high
+    confidence: medium
+    # Exclude specific rules
+    excludes:
+      - G104 # Errors unhandled (we use errcheck for this)
+      - G107 # Potential HTTP request made with variable url
+      - G402 # TLS InsecureSkipVerify set true
+
+  govet:
+    # Enable all analyzers
+    enable-all: true
+
+  misspell:
+    # Locale to use
+    locale: US
+
+  revive:
+    # Sets the default confidence level
+    min-confidence: 0.8
+    # Sets the default severity level
+    severity: warning
+    # Enable rules
+    rules:
+      - name: exported
+        severity: warning
+        disabled: false
+      - name: unexported-return
+        severity: warning
+        disabled: false
+      - name: error-return
+        severity: warning
+        disabled: false
+      - name: error-naming
+        severity: warning
+        disabled: false
+      - name: var-naming
+        severity: warning
+        disabled: false
+      - name: range
+        severity: warning
+        disabled: false
+      - name: increment-decrement
+        severity: warning
+        disabled: false
+      - name: var-declaration
+        severity: warning
+        disabled: false
+      - name: range-val-in-closure
+        severity: warning
+        disabled: false
+      - name: range-val-address
+        severity: warning
+        disabled: false
+      - name: waitgroup-by-value
+        severity: warning
+        disabled: false
+      - name: atomic
+        severity: warning
+        disabled: false
+      - name: empty-lines
+        severity: warning
+        disabled: false
+      - name: line-length-limit
+        severity: warning
+        disabled: false
+        arguments:
+          - 120
+
+  staticcheck:
+    # Enable all checks
+    checks: ['all']
+
+  unused:
+    # Check exported functions
+    check-exported: false
+
+# Issues configuration
+issues:
+  # Maximum issues count per one linter
+  max-issues-per-linter: 50
+
+  # Maximum count of issues with the same text
+  max-same-issues: 3
+
+  # Show only new issues created after git revision
+  new: false
+
+  # Exclude issues
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - noctx
+        - nolintlint
+        - revive
+        - staticcheck
+        - unparam
+
+    # Exclude known false positives
+    - text:
+        "Error return value of
+        .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv).
+        is not checked"
+      linters:
+        - errcheck
+
+    # Exclude common patterns in handlers
+    - text: 'exported function .* should have comment or be unexported'
+      linters:
+        - revive
+
+    # Exclude context.Context as first parameter (we use it)
+    - text: 'Function .* should pass context'
+      linters:
+        - noctx
+
+# Severity configuration
+severity:
+  # Default severity for all linters
+  default-severity: error
+  # Case sensitive matching
+  case-sensitive: false

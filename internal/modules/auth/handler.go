@@ -9,14 +9,16 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 )
 
-const RefreshTokenCookieName = "refresh_token"
+const refreshTokenCookieName = "refresh_token"
 
+// Handler handles authentication-related HTTP endpoints such as login, token refresh, and access control–protected actions.
 type Handler struct {
 	authService Service
-	ctx         *app.AppContext
+	ctx         *app.Context
 }
 
-func NewHandler(authService Service, ctx *app.AppContext) *Handler {
+// NewHandler constructs an authentication Handler with its required dependencies
+func NewHandler(authService Service, ctx *app.Context) *Handler {
 	return &Handler{
 		authService: authService,
 		ctx:         ctx,
@@ -54,7 +56,7 @@ func (h *Handler) Login(c *gin.Context) {
 	// set refresh token in cookie
 	cookieMaxAge := h.ctx.Cfg.JWT.RefreshTokenExpirationSecond
 	c.SetCookie(
-		RefreshTokenCookieName,            // name
+		refreshTokenCookieName,            // name
 		tokenPair.RefreshToken,            // value
 		cookieMaxAge,                      // max age
 		"/",                               // path
@@ -86,13 +88,13 @@ func (h *Handler) Login(c *gin.Context) {
 //	@Router			/auth/refresh [post]
 func (h *Handler) Refresh(c *gin.Context) {
 	// read form cookie instead of json body
-	refreshToken, err := c.Cookie(RefreshTokenCookieName)
+	refreshToken, err := c.Cookie(refreshTokenCookieName)
 	if err != nil {
 		httpx.Fail(
 			c,
 			http.StatusUnauthorized,
-			ErrRefreshTokenMissing.Code,
-			ErrRefreshTokenMissing.Message,
+			errRefreshTokenMissing.Code,
+			errRefreshTokenMissing.Message,
 			nil,
 		)
 		return

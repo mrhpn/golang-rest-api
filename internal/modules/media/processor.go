@@ -4,19 +4,19 @@ import (
 	"bytes"
 	"image"
 	"image/jpeg"
-	_ "image/png"
+	_ "image/png" // register PNG decoder for image.Decode
 	"io"
 
 	"github.com/nfnt/resize"
 )
 
-type ImageOptions struct {
+type imageOptions struct {
 	MaxWidth  uint
 	MaxHeight uint
 	Quality   int // 1 - 100
 }
 
-func ProcessImage(file io.Reader, opts ImageOptions) (io.Reader, int64, error) {
+func processImage(file io.Reader, opts imageOptions) (io.Reader, int64, error) {
 	// 1. decode image
 	img, _, err := image.Decode(file)
 	if err != nil {

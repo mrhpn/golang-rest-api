@@ -5,6 +5,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
+// User represents the db model for user
 type User struct {
 	models.BaseModel
 

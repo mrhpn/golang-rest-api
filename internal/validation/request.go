@@ -1,16 +1,17 @@
-package utils
+package validation
 
 import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/mrhpn/go-rest-api/internal/stringx"
 )
 
+// GetValidationMessage returns a human-readable message for a validation error.
 func GetValidationMessage(fe validator.FieldError) string {
-	field := ToSnakeCase(fe.Field())
+	field := stringx.ToSnakeCase(fe.Field())
 
 	switch fe.Tag() {
-
 	// ---------- presence ----------
 	case "required":
 		return fmt.Sprintf("%s is required", field)

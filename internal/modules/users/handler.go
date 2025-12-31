@@ -7,10 +7,12 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
+// Handler handles user-related HTTP endpoints such as user profile access and account management operations.
 type Handler struct {
 	userService Service
 }
 
+// NewHandler constructs a users Handler with its required service dependency.
 func NewHandler(userService Service) *Handler {
 	return &Handler{userService: userService}
 }
@@ -22,7 +24,7 @@ func NewHandler(userService Service) *Handler {
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		CreateUserRequest	true	"CreateUserRequest"
+//	@Param			request	body		createUserRequest	true	"CreateUserRequest"
 //	@Success		201		{object}	users.UserResponse
 //	@Failure		400		{object}	httpx.ErrorResponse
 //	@Failure		401		{object}	httpx.ErrorResponse
@@ -30,7 +32,7 @@ func NewHandler(userService Service) *Handler {
 //	@Security		BearerAuth
 //	@Router			/users [post]
 func (h *Handler) Create(c *gin.Context) {
-	var req CreateUserRequest
+	var req createUserRequest
 	if err := httpx.BindJSON(c, &req); err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -64,14 +66,14 @@ func (h *Handler) Create(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{id} [get]
 func (h *Handler) Get(c *gin.Context) {
-	var params IDParam
+	var params iDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
-	user, err := h.userService.GetById(httpx.ReqCtx(c), params.ID)
+	user, err := h.userService.GetByID(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -99,7 +101,7 @@ func (h *Handler) Get(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
-	var params IDParam
+	var params iDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
@@ -129,7 +131,7 @@ func (h *Handler) Delete(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{id}/restore [put]
 func (h *Handler) Restore(c *gin.Context) {
-	var params IDParam
+	var params iDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)

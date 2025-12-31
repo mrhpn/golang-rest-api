@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Service - auth service interface
 type Service interface {
 	Login(ctx context.Context, email, password string) (*security.TokenPair, *users.User, error)
 	RefreshToken(ctx context.Context, refreshToken string) (string, error)
@@ -18,6 +19,7 @@ type service struct {
 	securityHandler *security.JWTHandler
 }
 
+// NewService - constructs Auth Service
 func NewService(userService users.Service, jwtHandler *security.JWTHandler) Service {
 	return &service{
 		userService:     userService,
@@ -29,18 +31,18 @@ func (s *service) Login(ctx context.Context, email, password string) (*security.
 	// 1. get user from User module
 	user, err := s.userService.GetByEmail(ctx, email)
 	if err != nil {
-		return nil, nil, ErrInvalidCrendentials
+		return nil, nil, errInvalidCrendentials
 	}
 
 	// 2. verify password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, nil, ErrInvalidCrendentials
+		return nil, nil, errInvalidCrendentials
 	}
 
 	// 3. create token pair
 	tokens, err := s.securityHandler.GenerateTokenPair(user.ID, user.Role)
 	if err != nil {
-		return nil, nil, ErrTokenGeneration
+		return nil, nil, errTokenGeneration
 	}
 
 	return tokens, user, nil
@@ -54,7 +56,7 @@ func (s *service) RefreshToken(ctx context.Context, refreshToken string) (string
 	}
 
 	// 2. hit the db: ensure the user still exists and isn't blocked
-	user, err := s.userService.GetById(ctx, claims.UserID)
+	user, err := s.userService.GetByID(ctx, claims.UserID)
 	if err != nil {
 		return "", security.ErrInvalidToken
 	}
@@ -65,7 +67,7 @@ func (s *service) RefreshToken(ctx context.Context, refreshToken string) (string
 	// 3. generate ONLY a new access token
 	tokens, err := s.securityHandler.GenerateTokenPair(user.ID, user.Role)
 	if err != nil {
-		return "", ErrTokenGeneration
+		return "", errTokenGeneration
 	}
 
 	return tokens.AccessToken, nil

@@ -1,3 +1,4 @@
+// Package health exposes health and readiness checks for the application.
 package health
 
 import (
@@ -12,16 +13,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Handler handles application health and readiness check HTTP endpoints.
 type Handler struct {
-	appCtx *app.AppContext
+	appCtx *app.Context
 }
 
-func NewHandler(appCtx *app.AppContext) *Handler {
+// NewHandler constructs a health Handler with access to the application context.
+func NewHandler(appCtx *app.Context) *Handler {
 	return &Handler{appCtx: appCtx}
 }
 
-// HealthResponse represents the health check response
-type HealthResponse struct {
+// healthResponse represents the health check response
+type healthResponse struct {
 	Status    string            `json:"status"`
 	Timestamp string            `json:"timestamp"`
 	Checks    map[string]string `json:"checks,omitempty"`
@@ -33,10 +36,10 @@ type HealthResponse struct {
 //	@Description	Check health status of server (liveness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	HealthResponse
+//	@Success		200	{object}	healthResponse
 //	@Router			/health [get]
 func (h *Handler) Check(c *gin.Context) {
-	httpx.OK(c, http.StatusOK, HealthResponse{
+	httpx.OK(c, http.StatusOK, healthResponse{
 		Status:    "healthy",
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 	})
@@ -48,8 +51,8 @@ func (h *Handler) Check(c *gin.Context) {
 //	@Description	Check if service is ready to accept traffic (readiness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	HealthResponse
-//	@Failure		503	{object}	HealthResponse
+//	@Success		200	{object}	healthResponse
+//	@Failure		503	{object}	healthResponse
 //	@Router			/health/ready [get]
 func (h *Handler) Readiness(c *gin.Context) {
 	checks := make(map[string]string)
@@ -116,7 +119,7 @@ func (h *Handler) Readiness(c *gin.Context) {
 		httpStatus = http.StatusServiceUnavailable
 	}
 
-	httpx.OK(c, httpStatus, HealthResponse{
+	httpx.OK(c, httpStatus, healthResponse{
 		Status:    status,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Checks:    checks,
@@ -129,10 +132,10 @@ func (h *Handler) Readiness(c *gin.Context) {
 //	@Description	Check if service is alive (liveness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	HealthResponse
+//	@Success		200	{object}	healthResponse
 //	@Router			/health/live [get]
 func (h *Handler) Liveness(c *gin.Context) {
-	httpx.OK(c, http.StatusOK, HealthResponse{
+	httpx.OK(c, http.StatusOK, healthResponse{
 		Status:    "alive",
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 	})

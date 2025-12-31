@@ -8,15 +8,16 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/app"
 )
 
-func CORS(ctx *app.AppContext) gin.HandlerFunc {
+// CORS implements cors policies
+func CORS(ctx *app.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 		allowOrigin := ""
 
 		// determine if the origin is allowed
-		if len(ctx.Cfg.Http.AllowedOrigins) > 0 && ctx.Cfg.Http.AllowedOrigins[0] == "*" {
+		if len(ctx.Cfg.HTTP.AllowedOrigins) > 0 && ctx.Cfg.HTTP.AllowedOrigins[0] == "*" {
 			allowOrigin = origin // !use origin, instead of "*"
-		} else if slices.Contains(ctx.Cfg.Http.AllowedOrigins, origin) {
+		} else if slices.Contains(ctx.Cfg.HTTP.AllowedOrigins, origin) {
 			allowOrigin = origin
 		}
 

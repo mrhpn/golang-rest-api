@@ -1,52 +1,47 @@
 package auth
 
-import "github.com/mrhpn/go-rest-api/internal/errors"
+import "github.com/mrhpn/go-rest-api/internal/apperror"
 
 var (
-	ErrInternal = errors.New(
-		errors.Internal,
-		"INTERNAL_ERROR",
-		"internal server error",
-	)
-
-	ErrInvalidID = errors.New(
-		errors.InvalidInput,
-		"INVALID_ID_FORMAT",
-		"invalid id format",
-	)
-
-	ErrIdentityNotFoundInContext = errors.New(
-		errors.Internal,
+	// ErrIdentityNotFoundInContext indicates that the authenticated identity is missing from the request context.
+	ErrIdentityNotFoundInContext = apperror.New(
+		apperror.Internal,
 		"INTERNAL_ERROR",
 		"identity not found in context",
 	)
 
-	ErrUnauthorized = errors.New(
-		errors.Unauthorized,
+	// ErrUnauthorized indicates that the request lacks valid authentication credentials, such as a missing access token.
+	ErrUnauthorized = apperror.New(
+		apperror.Unauthorized,
 		"UNAUTHORIZED",
 		"unauthorized: missing token",
 	)
 
-	ErrForbidden = errors.New(
-		errors.Forbidden,
+	// ErrForbidden indicates that the authenticated identity does not
+	// have sufficient permissions to access the requested resource.
+	ErrForbidden = apperror.New(
+		apperror.Forbidden,
 		"FORBIDDEN",
 		"forbidden: insufficient permissions",
 	)
 
-	ErrRefreshTokenMissing = errors.New(
-		errors.Unauthorized,
+	// ErrRefreshTokenMissing indicates that a refresh token was expected but not provided in the request.
+	errRefreshTokenMissing = apperror.New(
+		apperror.Unauthorized,
 		"REFRESH_TOKEN_MISSING",
 		"refresh token missing",
 	)
 
-	ErrInvalidCrendentials = errors.New(
-		errors.Unauthorized,
+	// ErrInvalidCrendentials indicates that the provided authentication credentials are invalid.
+	errInvalidCrendentials = apperror.New(
+		apperror.Unauthorized,
 		"INVALID_CRENDENTIALS",
 		"invalid crendentials",
 	)
 
-	ErrTokenGeneration = errors.New(
-		errors.Internal,
+	// ErrTokenGeneration indicates a failure during access or refresh token generation.
+	errTokenGeneration = apperror.New(
+		apperror.Internal,
 		"ERR_TOKEN_GENERATION",
 		"cannot generate token",
 	)

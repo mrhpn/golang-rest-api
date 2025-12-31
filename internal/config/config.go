@@ -1,3 +1,4 @@
+// Package config provides application configuration loading and access.
 package config
 
 import (
@@ -6,11 +7,12 @@ import (
 	"strings"
 )
 
+// Config represents the full application configuration loaded at startup.
 type Config struct {
 	AppEnv    string
 	Port      string
-	DBUrl     string
-	Http      HttpConfig
+	DBURL     string
+	HTTP      HTTPConfig
 	RateLimit RateLimitConfig
 	DB        DBConfig
 	Redis     RedisConfig
@@ -19,12 +21,14 @@ type Config struct {
 	Storage   MinioConfig
 }
 
-type HttpConfig struct {
+// HTTPConfig represents the http-related config
+type HTTPConfig struct {
 	AllowedOrigins       []string
 	MaxRequestBodySize   int64
 	RequestTimeoutSecond int
 }
 
+// RateLimitConfig represents rate limit related config
 type RateLimitConfig struct {
 	Enabled  bool
 	Rate     int // requests per window
@@ -32,6 +36,7 @@ type RateLimitConfig struct {
 	Window   int // window in seconds
 }
 
+// DBConfig represents database related config
 type DBConfig struct {
 	MaxOpenConns          int // maximum open connections
 	MaxIdleConns          int // maximum idle connections
@@ -42,6 +47,7 @@ type DBConfig struct {
 	RetryDelaySecond      int // retry delay in seconds
 }
 
+// RedisConfig represents redis related config
 type RedisConfig struct {
 	Enabled  bool
 	Host     string
@@ -50,12 +56,14 @@ type RedisConfig struct {
 	DB       int // Redis database number (0-15)
 }
 
+// JWTConfig represents app's auth (jwt) related config
 type JWTConfig struct {
 	Secret                       string
 	AccessTokenExpirationSecond  int // in seconds
 	RefreshTokenExpirationSecond int // in seconds
 }
 
+// LogConfig represents app's logger related config
 type LogConfig struct {
 	Path           string
 	Level          string
@@ -65,6 +73,7 @@ type LogConfig struct {
 	Compress       bool
 }
 
+// MinioConfig represents app's storage (minio) related config
 type MinioConfig struct {
 	Host       string
 	AccessKey  string
@@ -73,6 +82,8 @@ type MinioConfig struct {
 	UseSSL     bool
 }
 
+// MustLoad loads the application configuration from environment variables.
+// It panics if any required configuration is missing.
 func MustLoad() *Config {
 	originsRaw := getEnv("ALLOWED_ORIGINS", "*")
 	var allowedOrigins []string
@@ -85,9 +96,9 @@ func MustLoad() *Config {
 	cfg := &Config{
 		AppEnv: getEnv("APP_ENV", "development"),
 		Port:   getEnv("APP_PORT", "8080"),
-		DBUrl:  getEnv("DATABASE_URL", ""),
+		DBURL:  getEnv("DATABASE_URL", ""),
 
-		Http: HttpConfig{
+		HTTP: HTTPConfig{
 			AllowedOrigins:       allowedOrigins,
 			MaxRequestBodySize:   int64(getEnvAsInt("MAX_REQUEST_BODY_SIZE_MB", 50)) * 1024 * 1024,
 			RequestTimeoutSecond: getEnvAsInt("REQUEST_TIMEOUT_SECOND", 30),
@@ -144,7 +155,7 @@ func MustLoad() *Config {
 		},
 	}
 
-	if cfg.DBUrl == "" {
+	if cfg.DBURL == "" {
 		panic("env: DATABASE_URL is missing")
 	}
 	if cfg.JWT.Secret == "" {

@@ -11,14 +11,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	appErr "github.com/mrhpn/go-rest-api/internal/errors"
+	"github.com/mrhpn/go-rest-api/internal/apperror"
 )
 
+// minioService implements the Service interface using MinIO as the underlying object storage backend.
 type minioService struct {
 	client     *minio.Client
 	bucketName string
 }
 
+// NewMinioService initializes a MinIO-backed media service with the provided connection credentials and bucket configuration.
 func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool) (Service, error) {
 	client, err := minio.New(host, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
@@ -67,19 +69,19 @@ func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool)
 }
 
 // Upload streams the file to MinIO and returns the path
-func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (string, error) {
+func (s *minioService) Upload(file *multipart.FileHeader, subDir fileCategory) (string, error) {
 	ctx := context.Background()
 
 	src, err := file.Open()
 	if err != nil {
-		return "", appErr.Wrap(
-			appErr.Internal,
-			ErrFileOpen.Code,
-			ErrFileOpen.Message,
+		return "", apperror.Wrap(
+			apperror.Internal,
+			errFileOpen.Code,
+			errFileOpen.Message,
 			err,
 		)
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	// 1. initialize vars with raw upload data
 	var reader io.Reader = src
@@ -88,17 +90,17 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (
 	ext := filepath.Ext(file.Filename)
 
 	// 2. define processing rules based on directory
-	var opts *ImageOptions
+	var opts *imageOptions
 	switch subDir {
-	case FileCategoryProfiles:
-		opts = &ImageOptions{MaxWidth: 400, MaxHeight: 400, Quality: 75}
-	case FileCategoryThumbnails:
-		opts = &ImageOptions{MaxWidth: 800, MaxHeight: 600, Quality: 80}
+	case fileCategoryProfiles:
+		opts = &imageOptions{MaxWidth: 400, MaxHeight: 400, Quality: 75}
+	case fileCategoryThumbnails:
+		opts = &imageOptions{MaxWidth: 800, MaxHeight: 600, Quality: 80}
 	}
 
 	// 3. apply processing if options were found
 	if opts != nil {
-		processed, newSize, err := ProcessImage(src, *opts)
+		processed, newSize, err := processImage(src, *opts)
 		if err == nil {
 			reader = processed
 			size = newSize
@@ -115,10 +117,10 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir FileCategory) (
 		ContentType: contentType,
 	})
 	if err != nil {
-		return "", appErr.Wrap(
-			appErr.Internal,
-			ErrUploadToStorage.Code,
-			ErrUploadToStorage.Message,
+		return "", apperror.Wrap(
+			apperror.Internal,
+			errUploadToStorage.Code,
+			errUploadToStorage.Message,
 			err,
 		)
 	}
@@ -134,19 +136,19 @@ func (s *minioService) HealthCheck(ctx context.Context) error {
 	// Check if bucket exists and is accessible
 	exists, err := s.client.BucketExists(ctx, s.bucketName)
 	if err != nil {
-		return appErr.Wrap(
-			appErr.Internal,
-			ErrStorageHealthCheck.Code,
-			ErrStorageHealthCheck.Message,
+		return apperror.Wrap(
+			apperror.Internal,
+			errStorageHealthCheck.Code,
+			errStorageHealthCheck.Message,
 			err,
 		)
 	}
 
 	if !exists {
-		return appErr.New(
-			appErr.Internal,
-			ErrStorageBucketMissing.Code,
-			ErrStorageBucketMissing.Message,
+		return apperror.New(
+			apperror.Internal,
+			errStorageBucketMissing.Code,
+			errStorageBucketMissing.Message,
 		)
 	}
 

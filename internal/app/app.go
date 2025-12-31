@@ -9,7 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
-type AppContext struct {
+// Context is the application context containing all required dependencies.
+type Context struct {
 	DB              *gorm.DB
 	Redis           *redis.Client
 	Cfg             *config.Config

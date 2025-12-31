@@ -22,7 +22,7 @@ definitions:
       access_token:
         type: string
     type: object
-  health.HealthResponse:
+  health.healthResponse:
     properties:
       checks:
         additionalProperties:
@@ -70,7 +70,16 @@ definitions:
     - RoleAdmin
     - RoleEmployee
     - RoleUser
-  users.CreateUserRequest:
+  users.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/security.Role'
+    type: object
+  users.createUserRequest:
     properties:
       email:
         type: string
@@ -88,15 +97,6 @@ definitions:
     - email
     - password
     - role
-    type: object
-  users.UserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: string
-      role:
-        $ref: '#/definitions/security.Role'
     type: object
 externalDocs:
   description: OpenAPI
@@ -187,7 +187,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.HealthResponse'
+            $ref: '#/definitions/health.healthResponse'
       summary: Check health
       tags:
       - Health
@@ -200,7 +200,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.HealthResponse'
+            $ref: '#/definitions/health.healthResponse'
       summary: Check liveness
       tags:
       - Health
@@ -213,11 +213,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.HealthResponse'
+            $ref: '#/definitions/health.healthResponse'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/health.HealthResponse'
+            $ref: '#/definitions/health.healthResponse'
       summary: Check readiness
       tags:
       - Health
@@ -266,7 +266,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/users.CreateUserRequest'
+          $ref: '#/definitions/users.createUserRequest'
       produces:
       - application/json
       responses:

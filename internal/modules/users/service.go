@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 
+	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/security"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Service defines the business logic for managing users.
 type Service interface {
-	Create(ctx context.Context, req CreateUserRequest) (*User, error)
-	GetById(ctx context.Context, id string) (*User, error)
+	Create(ctx context.Context, req createUserRequest) (*User, error)
+	GetByID(ctx context.Context, id string) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	Delete(ctx context.Context, id string) error
 	Restore(ctx context.Context, id string) error
@@ -21,17 +23,18 @@ type service struct {
 	repo Repository
 }
 
+// NewService constructs a users Service with the provided repository.
 func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, error) {
+func (s *service) Create(ctx context.Context, req createUserRequest) (*User, error) {
 	// check email uniqueness
 	_, err := s.repo.FindByEmail(ctx, req.Email)
 	if err == nil {
-		return nil, ErrEmailExists
+		return nil, errEmailExists
 	}
-	if !errors.Is(err, ErrUserNotFound) {
+	if !errors.Is(err, errUserNotFound) {
 		return nil, err // unexpected DB error
 	}
 
@@ -41,7 +44,7 @@ func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		return nil, ErrInternal
+		return nil, apperror.ErrInternal
 	}
 
 	// create user
@@ -67,8 +70,8 @@ func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 	return user, nil
 }
 
-func (s *service) GetById(ctx context.Context, id string) (*User, error) {
-	return s.repo.FindById(ctx, id)
+func (s *service) GetByID(ctx context.Context, id string) (*User, error) {
+	return s.repo.FindByID(ctx, id)
 }
 
 func (s *service) GetByEmail(ctx context.Context, email string) (*User, error) {
@@ -82,7 +85,7 @@ func (s *service) Delete(ctx context.Context, id string) error {
 	}
 
 	if affected == 0 {
-		return ErrUserNotFound
+		return errUserNotFound
 	}
 
 	log.Ctx(ctx).Info().Str("user_id", id).Msg("user deleted")
@@ -97,7 +100,7 @@ func (s *service) Restore(ctx context.Context, id string) error {
 	}
 
 	if affected == 0 {
-		return ErrUserNotFound
+		return errUserNotFound
 	}
 
 	log.Ctx(ctx).Info().Str("user_id", id).Msg("user restored")

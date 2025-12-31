@@ -10,14 +10,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func setupAppContext(cfg *config.Config, db *gorm.DB, redis *redis.Client, logger zerolog.Logger, media media.Service) *app.AppContext {
+func setupAppContext(cfg *config.Config, db *gorm.DB, redis *redis.Client, logger zerolog.Logger, media media.Service) *app.Context {
 	securityHandler := security.NewJWTHandler(
 		cfg.JWT.Secret,
 		cfg.JWT.AccessTokenExpirationSecond,
 		cfg.JWT.RefreshTokenExpirationSecond,
 	)
 
-	return &app.AppContext{
+	return &app.Context{
 		DB:              db,
 		Redis:           redis,
 		Cfg:             cfg,

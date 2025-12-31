@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	domain "github.com/mrhpn/go-rest-api/internal/errors"
+	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"gorm.io/gorm"
 )
 
@@ -18,8 +18,8 @@ type mappedError struct {
 // MapError maps an error to an HTTP response structure
 // It sanitizes internal errors and ensures client-safe messages
 // Note: Error logging is handled in FailWithError to include request context
-func MapError(err error) mappedError {
-	var appErr *domain.AppError
+func mapError(err error) mappedError {
+	var appErr *apperror.AppError
 
 	// 1. Check for custom application errors
 	if errors.As(err, &appErr) {
@@ -49,17 +49,17 @@ func MapError(err error) mappedError {
 	}
 }
 
-func mapKindToStatus(kind domain.Kind) int {
+func mapKindToStatus(kind apperror.Kind) int {
 	switch kind {
-	case domain.NotFound:
+	case apperror.NotFound:
 		return http.StatusNotFound
-	case domain.InvalidInput, domain.BadRequest:
+	case apperror.InvalidInput, apperror.BadRequest:
 		return http.StatusBadRequest
-	case domain.Conflict:
+	case apperror.Conflict:
 		return http.StatusConflict
-	case domain.Unauthorized:
+	case apperror.Unauthorized:
 		return http.StatusUnauthorized
-	case domain.Forbidden:
+	case apperror.Forbidden:
 		return http.StatusForbidden
 	default:
 		return http.StatusInternalServerError

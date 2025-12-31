@@ -11,7 +11,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/routes"
 )
 
-func setupRouter(ctx *app.AppContext) *gin.Engine {
+func setupRouter(ctx *app.Context) *gin.Engine {
 	httpx.RegisterValidators()
 	if ctx.Cfg.AppEnv != "development" {
 		gin.SetMode(gin.ReleaseMode)
@@ -21,7 +21,7 @@ func setupRouter(ctx *app.AppContext) *gin.Engine {
 
 	// global request body limit middleware
 	router.Use(func(c *gin.Context) {
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, ctx.Cfg.Http.MaxRequestBodySize)
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, ctx.Cfg.HTTP.MaxRequestBodySize)
 		c.Next()
 	})
 
@@ -41,7 +41,7 @@ func setupRouter(ctx *app.AppContext) *gin.Engine {
 	router.Use(middlewares.RequestLogger())
 
 	// Request timeout middleware
-	requestTimeout := time.Duration(ctx.Cfg.Http.RequestTimeoutSecond) * time.Second
+	requestTimeout := time.Duration(ctx.Cfg.HTTP.RequestTimeoutSecond) * time.Second
 	if requestTimeout <= 0 {
 		requestTimeout = 30 * time.Second
 	}

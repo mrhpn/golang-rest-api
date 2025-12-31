@@ -1,41 +1,19 @@
 package users
 
-import "github.com/mrhpn/go-rest-api/internal/errors"
+import "github.com/mrhpn/go-rest-api/internal/apperror"
 
 var (
-	ErrInternal = errors.New(
-		errors.Internal,
-		"INTERNAL_ERROR",
-		"internal server error",
-	)
-
-	ErrDatabaseError = errors.New(
-		errors.Internal,
-		"DATABASE_ERROR",
-		"failed to perform database operation",
-	)
-
-	ErrInvalidID = errors.New(
-		errors.InvalidInput,
-		"INVALID_ID_FORMAT",
-		"invalid id format",
-	)
-
-	ErrUserNotFound = errors.New(
-		errors.NotFound,
+	// errUserNotFound indicates that a requested user does not exist.
+	errUserNotFound = apperror.New(
+		apperror.NotFound,
 		"USER_NOT_FOUND",
 		"user not found",
 	)
 
-	ErrEmailExists = errors.New(
-		errors.Conflict,
+	// errEmailExists indicates that the provided email address is already associated with an existing user.
+	errEmailExists = apperror.New(
+		apperror.Conflict,
 		"EMAIL_EXISTS",
 		"email already exists",
-	)
-
-	ErrInvalidUserInput = errors.New(
-		errors.InvalidInput,
-		"INVALID_USER_INPUT",
-		"invalid user input",
 	)
 )

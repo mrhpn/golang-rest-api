@@ -1,17 +1,26 @@
-package errors
+// Package apperror provides utilities for working with application errors.
+package apperror
 
 import "fmt"
 
+// Kind represents the category of an application error.
 type Kind string
 
 const (
-	NotFound     Kind = "NOT_FOUND"
+	// NotFound indicates that a requested resource does not exist.
+	NotFound Kind = "NOT_FOUND"
+	// Unauthorized indicates missing or invalid authentication.
 	Unauthorized Kind = "UNAUTHORIZED"
-	Forbidden    Kind = "FORBIDDEN"
-	Conflict     Kind = "CONFLICT"
-	InvalidInput Kind = "INVALID_INPUT" // prioritized over BadRequest
-	BadRequest   Kind = "BAD_REQUEST"
-	Internal     Kind = "INTERNAL"
+	// Forbidden indicates insufficient permissions.
+	Forbidden Kind = "FORBIDDEN"
+	// Conflict indicates a state conflict, such as a duplicate resource.
+	Conflict Kind = "CONFLICT"
+	// InvalidInput indicates validation failures or invalid input based on business logic.
+	InvalidInput Kind = "INVALID_INPUT"
+	// BadRequest indicates a malformed or invalid request.
+	BadRequest Kind = "BAD_REQUEST"
+	// Internal indicates an unexpected internal server error.
+	Internal Kind = "INTERNAL"
 )
 
 // AppError represents an application-level error with structured information
@@ -24,6 +33,7 @@ type AppError struct {
 	Err     error             // underlying error (for logging, not exposed to clients)
 }
 
+// Error returns a human-readable string representation of the error.
 func (e *AppError) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("%s: %v", e.Message, e.Err)

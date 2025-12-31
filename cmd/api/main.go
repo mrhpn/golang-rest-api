@@ -1,3 +1,4 @@
+// Package main is entry point of the entire application
 package main
 
 //	@title			Go REST API

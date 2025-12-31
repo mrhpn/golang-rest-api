@@ -20,7 +20,7 @@ type contextKey string
 const userKey contextKey = "user_identity"
 
 // RequireAuth validates the JWT and injects claims into the context
-func RequireAuth(ctx *app.AppContext) gin.HandlerFunc {
+func RequireAuth(ctx *app.Context) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. check for Authorization header
 		authHeader := c.GetHeader("Authorization")

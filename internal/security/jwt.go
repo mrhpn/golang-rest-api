@@ -7,24 +7,27 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// jwt payload
+// UserClaims describes JWT user claims
 type UserClaims struct {
 	UserID string `json:"user_id"`
 	Role   Role   `json:"role"`
 	jwt.RegisteredClaims
 }
 
+// TokenPair consists of AccessToken and RefreshToken
 type TokenPair struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
+// JWTHandler struct
 type JWTHandler struct {
 	secret        []byte
 	accessExpiry  time.Duration
 	refreshExpiry time.Duration
 }
 
+// NewJWTHandler constructs a JWTHandler
 func NewJWTHandler(secret string, accessTokenExpirySecond, refreshTokenExpirySecond int) *JWTHandler {
 	return &JWTHandler{
 		secret:        []byte(secret),
@@ -33,7 +36,7 @@ func NewJWTHandler(secret string, accessTokenExpirySecond, refreshTokenExpirySec
 	}
 }
 
-// generate access & refresh tokens
+// GenerateTokenPair generates access & refresh tokens
 func (h *JWTHandler) GenerateTokenPair(userID string, role Role) (*TokenPair, error) {
 	accessToken, err := h.signToken(userID, role, h.accessExpiry)
 	if err != nil {
@@ -66,7 +69,7 @@ func (h *JWTHandler) signToken(userID string, role Role, expiry time.Duration) (
 	return token.SignedString(h.secret)
 }
 
-// validate token
+// ValidateToken validates jwt token
 func (h *JWTHandler) ValidateToken(tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

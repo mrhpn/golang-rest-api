@@ -1,12 +1,12 @@
+// Package routes define entire application's api endpoints
 package routes
 
 import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/mrhpn/go-rest-api/docs"
+	_ "github.com/mrhpn/go-rest-api/docs" // integrates docs
 	"github.com/mrhpn/go-rest-api/internal/app"
-	"github.com/mrhpn/go-rest-api/internal/middlewares"
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
@@ -17,7 +17,8 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func Register(router *gin.Engine, ctx *app.AppContext) {
+// Register registers app's api endpoints
+func Register(router *gin.Engine, ctx *app.Context) {
 	authRateLimitCount := ctx.Cfg.RateLimit.AuthRate
 	if authRateLimitCount <= 0 {
 		authRateLimitCount = 5 // Default: 5 requests per minute for auth endpoints
@@ -67,7 +68,7 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 	// ----------------------- auth ----------------------- //
 	// Apply stricter rate limiting for auth endpoints using Redis
 	authGroup := api.Group("/auth")
-	authGroup.Use(middlewares.RateLimitRedisWithConfig(ctx, authRateLimitCount, time.Minute))
+	authGroup.Use(mw.RateLimitRedisWithConfig(ctx, authRateLimitCount, time.Minute))
 	{
 		authGroup.POST("/login", authH.Login)
 		authGroup.POST("/refresh", authH.Refresh)
@@ -88,6 +89,5 @@ func Register(router *gin.Engine, ctx *app.AppContext) {
 	mediaGroup.Use(mw.RequireAuth(ctx))
 	{
 		mediaGroup.POST("/upload/profile", mediaH.UploadProfilePicture)
-		mediaGroup.POST("/upload/thumbnail", mediaH.UploadThumbnail)
 	}
 }

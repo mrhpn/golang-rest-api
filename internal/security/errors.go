@@ -1,22 +1,25 @@
 package security
 
-import "github.com/mrhpn/go-rest-api/internal/errors"
+import "github.com/mrhpn/go-rest-api/internal/apperror"
 
 var (
-	ErrInvalidToken = errors.New(
-		errors.Unauthorized,
+	// ErrInvalidToken indicates that the provided authentication token is malformed, unverifiable, or otherwise invalid.
+	ErrInvalidToken = apperror.New(
+		apperror.Unauthorized,
 		"INVALID_TOKEN",
 		"invalid token",
 	)
 
-	ErrExpiredToken = errors.New(
-		errors.Unauthorized,
+	// ErrExpiredToken indicates that the provided authentication token has expired and is no longer valid.
+	ErrExpiredToken = apperror.New(
+		apperror.Unauthorized,
 		"EXPIRED_TOKEN",
 		"token has expired",
 	)
 
-	ErrBlockedUser = errors.New(
-		errors.Unauthorized,
+	// ErrBlockedUser indicates that the authenticated user is blocked and is not allowed to access protected resources.
+	ErrBlockedUser = apperror.New(
+		apperror.Unauthorized,
 		"USER_BLOCKED",
 		"user is blocked",
 	)

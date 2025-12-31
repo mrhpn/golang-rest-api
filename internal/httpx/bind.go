@@ -1,3 +1,4 @@
+// Package httpx provides utilities for binding request data to structs and validating input.
 package httpx
 
 import (
@@ -5,29 +6,31 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	appErr "github.com/mrhpn/go-rest-api/internal/errors"
-	"github.com/mrhpn/go-rest-api/internal/utils"
+	"github.com/mrhpn/go-rest-api/internal/apperror"
+	"github.com/mrhpn/go-rest-api/internal/stringx"
+	"github.com/mrhpn/go-rest-api/internal/validation"
 )
 
+// BindJSON binds the request body to the given struct.
 func BindJSON(c *gin.Context, req any) error {
 	if err := c.ShouldBindJSON(req); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
 			fields := make(map[string]string)
 			for _, fe := range ve {
-				fields[utils.ToSnakeCase(fe.Field())] = utils.GetValidationMessage(fe)
+				fields[stringx.ToSnakeCase(fe.Field())] = validation.GetValidationMessage(fe)
 			}
 
-			return &appErr.AppError{
-				Kind:    appErr.InvalidInput,
+			return &apperror.AppError{
+				Kind:    apperror.InvalidInput,
 				Code:    "INVALID_REQUEST",
 				Message: "invalid request",
 				Fields:  fields,
 			}
 		}
 
-		return appErr.New(
-			appErr.BadRequest,
+		return apperror.New(
+			apperror.BadRequest,
 			"BAD_REQUEST",
 			"invalid request",
 		)
@@ -35,10 +38,11 @@ func BindJSON(c *gin.Context, req any) error {
 	return nil
 }
 
+// BindURI binds the request URI to the given struct.
 func BindURI(c *gin.Context, req any) error {
 	if err := c.ShouldBindUri(req); err != nil {
-		return appErr.New(
-			appErr.InvalidInput,
+		return apperror.New(
+			apperror.InvalidInput,
 			"INVALID_URI",
 			"invalid recource id",
 		)

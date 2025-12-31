@@ -131,7 +131,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.healthResponse"
                         }
                     }
                 }
@@ -151,7 +151,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.healthResponse"
                         }
                     }
                 }
@@ -171,13 +171,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.healthResponse"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.healthResponse"
                         }
                     }
                 }
@@ -266,7 +266,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.CreateUserRequest"
+                            "$ref": "#/definitions/users.createUserRequest"
                         }
                     }
                 ],
@@ -491,7 +491,7 @@ const docTemplate = `{
                 }
             }
         },
-        "health.HealthResponse": {
+        "health.healthResponse": {
             "type": "object",
             "properties": {
                 "checks": {
@@ -560,7 +560,21 @@ const docTemplate = `{
                 "RoleUser"
             ]
         },
-        "users.CreateUserRequest": {
+        "users.UserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/security.Role"
+                }
+            }
+        },
+        "users.createUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -586,20 +600,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/security.Role"
                         }
                     ]
-                }
-            }
-        },
-        "users.UserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/security.Role"
                 }
             }
         }

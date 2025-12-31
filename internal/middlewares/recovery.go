@@ -6,10 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
+	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
-	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 )
 
+// Recovery gives ability to recover from internal server errors
 func Recovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
@@ -25,8 +26,8 @@ func Recovery() gin.HandlerFunc {
 				httpx.Fail(
 					c,
 					http.StatusInternalServerError,
-					auth.ErrInternal.Code,
-					auth.ErrInternal.Message,
+					apperror.ErrInternal.Code,
+					apperror.ErrInternal.Message,
 					nil,
 				)
 			}

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -16,16 +17,25 @@ import (
 type CustomGormLogger struct{}
 
 // LogMode sets the log level for the custom logger
-func (l *CustomGormLogger) LogMode(level logger.LogLevel) logger.Interface { return l }
+// The log level is ignored because logging is delegated to Zerolog.
+func (l *CustomGormLogger) LogMode(_ logger.LogLevel) logger.Interface { return l }
+
+// Info logs informational messages from GORM.
 func (l *CustomGormLogger) Info(ctx context.Context, msg string, data ...any) {
 	log.Ctx(ctx).Info().Msgf(msg, data...)
 }
+
+// Warn logs warning messages from GORM.
 func (l *CustomGormLogger) Warn(ctx context.Context, msg string, data ...any) {
 	log.Ctx(ctx).Warn().Msgf(msg, data...)
 }
+
+// Error logs error messages from GORM.
 func (l *CustomGormLogger) Error(ctx context.Context, msg string, data ...any) {
 	log.Ctx(ctx).Error().Msgf(msg, data...)
 }
+
+// Trace logs SQL execution details including elapsed time and errors.
 func (l *CustomGormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	elapsed := time.Since(begin)
 	sql, rows := fc()
@@ -33,7 +43,7 @@ func (l *CustomGormLogger) Trace(ctx context.Context, begin time.Time, fc func()
 	// pull logger from context which contains request_id (and request-scoped fields)
 	lgr := log.Ctx(ctx)
 
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		lgr.Error().
 			Err(err).
 			Dur("elapsed", elapsed).
@@ -162,50 +172,35 @@ func registerQueryTimeoutCallback(db *gorm.DB, dbCfg *config.DBConfig) {
 		queryTimeout = 30 * time.Second
 	}
 
-	// Register callback for all query operations
-	db.Callback().Query().Before("gorm:query").Register("apply_query_timeout", func(db *gorm.DB) {
+	applyTimeout := func(db *gorm.DB) {
 		if db.Statement != nil && db.Statement.Context != nil {
-			// Check if context already has a deadline (don't override existing timeouts)
 			if _, hasDeadline := db.Statement.Context.Deadline(); !hasDeadline {
 				timeoutCtx, cancel := context.WithTimeout(db.Statement.Context, queryTimeout)
-				// Store cancel function in context value so it can be called later
-				// GORM will handle the context lifecycle
+				// Note: GORM doesn't provide a hook to call cancel(),
+				// but when the parent context is done, this child is cleaned up.
 				_ = cancel
 				db.Statement.Context = timeoutCtx
 			}
 		}
-	})
+	}
+
+	// Register callback for all query operations
+	if err := db.Callback().Query().Before("gorm:query").Register("apply_query_timeout", applyTimeout); err != nil {
+		log.Error().Err(err).Msg("failed to register gorm query timeout callback")
+	}
 
 	// Register callback for create operations
-	db.Callback().Create().Before("gorm:create").Register("apply_query_timeout", func(db *gorm.DB) {
-		if db.Statement != nil && db.Statement.Context != nil {
-			if _, hasDeadline := db.Statement.Context.Deadline(); !hasDeadline {
-				timeoutCtx, cancel := context.WithTimeout(db.Statement.Context, queryTimeout)
-				_ = cancel
-				db.Statement.Context = timeoutCtx
-			}
-		}
-	})
+	if err := db.Callback().Create().Before("gorm:create").Register("apply_query_timeout", applyTimeout); err != nil {
+		log.Error().Err(err).Msg("failed to register gorm create timeout callback")
+	}
 
 	// Register callback for update operations
-	db.Callback().Update().Before("gorm:update").Register("apply_query_timeout", func(db *gorm.DB) {
-		if db.Statement != nil && db.Statement.Context != nil {
-			if _, hasDeadline := db.Statement.Context.Deadline(); !hasDeadline {
-				timeoutCtx, cancel := context.WithTimeout(db.Statement.Context, queryTimeout)
-				_ = cancel
-				db.Statement.Context = timeoutCtx
-			}
-		}
-	})
+	if err := db.Callback().Update().Before("gorm:update").Register("apply_query_timeout", applyTimeout); err != nil {
+		log.Error().Err(err).Msg("failed to register gorm update timeout callback")
+	}
 
 	// Register callback for delete operations
-	db.Callback().Delete().Before("gorm:delete").Register("apply_query_timeout", func(db *gorm.DB) {
-		if db.Statement != nil && db.Statement.Context != nil {
-			if _, hasDeadline := db.Statement.Context.Deadline(); !hasDeadline {
-				timeoutCtx, cancel := context.WithTimeout(db.Statement.Context, queryTimeout)
-				_ = cancel
-				db.Statement.Context = timeoutCtx
-			}
-		}
-	})
+	if err := db.Callback().Delete().Before("gorm:delete").Register("apply_query_timeout", applyTimeout); err != nil {
+		log.Error().Err(err).Msg("failed to register gorm delete timeout callback")
+	}
 }

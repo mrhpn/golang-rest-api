@@ -1,27 +1,44 @@
-# config
-config/*
-!config/app.example.yaml
-!config/app.prod.yaml
-!config/config.ini
-!config/config.example.ini
-.env*
-!.env.example
-
-.vscode
-
-# documents
-documents/design/*.bkp
-
-# atifacts
-.DS_Store
-bixin-api
-.vscode
-.idea
-__data__
-.cursorrules
-
-# logs
-logs/*
-stderr-main.log
-
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
 tmp/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the coverage tool
+*.out
+coverage.html
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+dist/
+build/

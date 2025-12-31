@@ -60,7 +60,7 @@ func Fail(c *gin.Context, status int, code string, message string, fields map[st
 // This is the preferred method for handling errors in handlers
 // It automatically logs errors and maps them to appropriate HTTP responses
 func FailWithError(c *gin.Context, err error) {
-	mapped := MapError(err)
+	mapped := mapError(err)
 
 	// Log error with request context (request_id is already in context from RequestID middleware)
 	logger := log.Ctx(c.Request.Context())

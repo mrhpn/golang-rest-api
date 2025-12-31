@@ -1,7 +1,8 @@
-package utils
+package stringx
 
 import "strings"
 
+// ToSnakeCase converts a string to snake_case.
 func ToSnakeCase(str string) string {
 	var b strings.Builder
 	for i, r := range str {

@@ -8,7 +8,7 @@ import (
 )
 
 func setupDatabase(cfg *config.Config) *gorm.DB {
-	db, err := database.Connect(cfg.DBUrl, &cfg.DB)
+	db, err := database.Connect(cfg.DBURL, &cfg.DB)
 	if err != nil {
 		log.Fatal().Err(err).Msg("❌ Database connection failed")
 	}

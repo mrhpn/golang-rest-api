@@ -11,6 +11,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// SetupLogger sets up the logger for the application using zerolog.
 func SetupLogger(logCfg *config.LogConfig, env string) zerolog.Logger {
 	var writer io.Writer
 
@@ -23,7 +24,7 @@ func SetupLogger(logCfg *config.LogConfig, env string) zerolog.Logger {
 		// production: write json to both Stdout (for docker/k8s logging) and a rotating log file
 
 		// ensure log directory exists
-		_ = os.MkdirAll(logCfg.Path, 0755)
+		_ = os.MkdirAll(logCfg.Path, 0750)
 
 		rotatingWriter := &lumberjack.Logger{
 			Filename:   filepath.Join(logCfg.Path, "app.log"),

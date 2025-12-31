@@ -106,7 +106,7 @@ func (rl *RedisRateLimiter) Allow(ctx context.Context, key string) (*RateLimitRe
 }
 
 // createRateLimitHandler is the shared implementation for Redis-based rate limiting
-func createRateLimitHandler(ctx *app.AppContext, rate int, window time.Duration) gin.HandlerFunc {
+func createRateLimitHandler(ctx *app.Context, rate int, window time.Duration) gin.HandlerFunc {
 	if !ctx.Cfg.RateLimit.Enabled {
 		// Rate limiting disabled, return no-op middleware
 		return func(c *gin.Context) {
@@ -181,7 +181,7 @@ func createRateLimitHandler(ctx *app.AppContext, rate int, window time.Duration)
 // 1. Multi-instance: Shared Redis state across all replicas
 // 2. Sliding window: Prevents burst attacks at window boundaries
 // 3. Proper headers: Includes X-RateLimit-Reset with Unix timestamp
-func RateLimitRedis(ctx *app.AppContext) gin.HandlerFunc {
+func RateLimitRedis(ctx *app.Context) gin.HandlerFunc {
 	rate := ctx.Cfg.RateLimit.Rate
 	if rate <= 0 {
 		rate = 100
@@ -197,6 +197,6 @@ func RateLimitRedis(ctx *app.AppContext) gin.HandlerFunc {
 
 // RateLimitRedisWithConfig creates a Redis-based rate limiter with custom rate and window
 // Use this for route-specific rate limiting (e.g., stricter limits for auth endpoints)
-func RateLimitRedisWithConfig(ctx *app.AppContext, rate int, window time.Duration) gin.HandlerFunc {
+func RateLimitRedisWithConfig(ctx *app.Context, rate int, window time.Duration) gin.HandlerFunc {
 	return createRateLimitHandler(ctx, rate, window)
 }
