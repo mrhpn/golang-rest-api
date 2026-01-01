@@ -1,35 +1,9 @@
 # golangci-lint configuration file
-# Compatible with golangci-lint v2.x
-version: 2
+version: '2'
 
 run:
-  # Timeout for analysis
   timeout: 5m
-
-  # Include test files
   tests: true
-
-  # Skip directories
-  skip-dirs:
-    - vendor
-    - tmp
-    - bin
-    - logs
-    - docs
-
-  # Skip files
-  skip-files:
-    - ".*\\.pb\\.go$"
-    - ".*\\.gen\\.go$"
-
-# Output configuration
-output:
-  # Colored output format
-  format: colored-line-number
-  # Print linter name in issue line
-  print-issued-lines: true
-  # Print linter name in unused line
-  print-linter-name: true
 
 # Linters configuration
 linters:
@@ -95,49 +69,20 @@ linters-settings:
     # Enable rules
     rules:
       - name: exported
-        severity: warning
-        disabled: false
       - name: unexported-return
-        severity: warning
-        disabled: false
       - name: error-return
-        severity: warning
-        disabled: false
       - name: error-naming
-        severity: warning
-        disabled: false
       - name: var-naming
-        severity: warning
-        disabled: false
       - name: range
-        severity: warning
-        disabled: false
       - name: increment-decrement
-        severity: warning
-        disabled: false
       - name: var-declaration
-        severity: warning
-        disabled: false
       - name: range-val-in-closure
-        severity: warning
-        disabled: false
       - name: range-val-address
-        severity: warning
-        disabled: false
       - name: waitgroup-by-value
-        severity: warning
-        disabled: false
       - name: atomic
-        severity: warning
-        disabled: false
       - name: empty-lines
-        severity: warning
-        disabled: false
       - name: line-length-limit
-        severity: warning
-        disabled: false
-        arguments:
-          - 120
+        arguments: [120]
 
   staticcheck:
     # Enable all checks
@@ -151,15 +96,21 @@ linters-settings:
 issues:
   # Maximum issues count per one linter
   max-issues-per-linter: 50
-
-  # Maximum count of issues with the same text
   max-same-issues: 3
 
-  # Show only new issues created after git revision
-  new: false
+  exclude-dirs:
+    - vendor
+    - tmp
+    - bin
+    - logs
+    - docs
+
+  exclude-files:
+    - ".*\\.pb\\.go$"
+    - ".*\\.gen\\.go$"
 
   # Exclude issues
-  exclude-rules:
+  exclude:
     # Exclude some linters from running on tests files
     - path: _test\.go
       linters:
@@ -191,7 +142,5 @@ issues:
 
 # Severity configuration
 severity:
-  # Default severity for all linters
-  default-severity: error
-  # Case sensitive matching
+  default: error
   case-sensitive: false
