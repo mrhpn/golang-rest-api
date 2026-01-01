@@ -1,4 +1,4 @@
-name: Lint
+name: golangci-lint
 
 on:
   push:
@@ -6,32 +6,32 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+
 # Cancel previous runs if a new commit is pushed to the same PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Lint & Test
+  golangci:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod' # Reads version from go.mod file
           cache: false
 
-      - name: Run Linter
-        uses: golangci/golangci-lint-action@v7
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7.2
+          version: v2.6
           args: --timeout=5m
-
-      - name: Run Unit Tests
-        run: make test
 
       - name: Check formatting
         run: make fmt
