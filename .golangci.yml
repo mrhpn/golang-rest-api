@@ -59,8 +59,6 @@ linters-settings:
     check-type-assertions: true
     # Report about assignment of errors to blank identifier
     check-blank: true
-    # Report about not checking of errors in if conditions
-    check-assertions: true
 
   errorlint:
     # Check whether fmt.Errorf uses the %w verb for formatting errors
@@ -71,8 +69,6 @@ linters-settings:
     comparison: true
 
   gosec:
-    # Include test files
-    tests: true
     # Severity of issues: low, medium, high
     severity: medium
     # Confidence of issues: low, medium, high
