@@ -7,9 +7,9 @@ const (
 )
 
 const (
-	APIPrefix = "api"
+	APIPrefix         = "api"
 	CurrentAPIVersion = "v1"
-	APIAuthPrefix = "auth"
+	APIAuthPrefix     = "auth"
 
 	APIVersionPrefix = "/" + APIPrefix + "/" + CurrentAPIVersion
 	APIAuthPath      = APIVersionPrefix + "/" + APIAuthPrefix

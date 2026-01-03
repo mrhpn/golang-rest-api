@@ -55,7 +55,7 @@ func setupRouter(ctx *app.Context) *gin.Engine {
 	if ctx.Cfg.RateLimit.Enabled {
 		router.Use(func(c *gin.Context) {
 			// Skip rate limiting for OPTIONS (CORS preflight) requests
-			if c.Request.Method == "OPTIONS" {
+			if c.Request.Method == http.MethodOptions {
 				c.Next()
 				return
 			}
@@ -65,7 +65,7 @@ func setupRouter(ctx *app.Context) *gin.Engine {
 				c.Next()
 				return
 			}
-			
+
 			router.Use(middlewares.RateLimitRedis(ctx))
 		})
 	}

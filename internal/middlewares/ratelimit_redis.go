@@ -66,7 +66,6 @@ func (rl *RedisRateLimiter) Allow(ctx context.Context, key string) (*RateLimitRe
 	if err != nil {
 		return nil, fmt.Errorf("redis rate limit check failed: %w", err)
 	}
-	
 	// Get count after adding current request
 	count := int(countCmd.Val())
 
@@ -78,7 +77,7 @@ func (rl *RedisRateLimiter) Allow(ctx context.Context, key string) (*RateLimitRe
 		// Add current request with timestamp as score
 		pipe = rl.client.Pipeline()
 		pipe.ZAdd(ctx, redisKey, redis.Z{
-			Score: float64(now.Unix()),
+			Score:  float64(now.Unix()),
 			Member: strconv.FormatInt(now.UnixNano(), 10), // Unique number
 		})
 
