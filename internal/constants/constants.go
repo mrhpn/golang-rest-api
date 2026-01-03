@@ -55,9 +55,8 @@ const (
 	LogMaxBackup = 8
 	LogMaxSizeMB = 100
 
-	RateLimit       = 100
-	RateLimitAuth   = 7
-	RateLimitWindow = 60
+	RateLimit     = "100-M" // 100 requests per minute
+	RateLimitAuth = "7-M"   // 7 requests per minute for auth routes
 
 	AccessTokenExpirationSecond  = 3600
 	RefreshTokenExpirationSecond = 86400

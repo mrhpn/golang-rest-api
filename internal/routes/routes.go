@@ -2,8 +2,6 @@
 package routes
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -21,9 +19,9 @@ import (
 
 // Register registers app's api endpoints
 func Register(router *gin.Engine, ctx *app.Context) {
-	authRateLimitCount := ctx.Cfg.RateLimit.AuthRate
-	if authRateLimitCount <= 0 {
-		authRateLimitCount = constants.RateLimitAuth // Default: 5 requests per minute for auth endpoints
+	authRateLimit := ctx.Cfg.RateLimit.AuthRate
+	if authRateLimit == "" {
+		authRateLimit = constants.RateLimitAuth // Default: 7 requests per minute for auth endpoints
 	}
 
 	// API versioning: v1 is the current version
@@ -70,7 +68,7 @@ func Register(router *gin.Engine, ctx *app.Context) {
 	// ----------------------- auth ----------------------- //
 	// Apply stricter rate limiting for auth endpoints using Redis
 	authGroup := api.Group("/" + constants.APIAuthPrefix)
-	authGroup.Use(mw.RateLimitRedisWithConfig(ctx, authRateLimitCount, time.Minute))
+	authGroup.Use(mw.RateLimitRedisWithConfig(ctx, authRateLimit))
 	{
 		authGroup.POST("/login", authH.Login)
 		authGroup.POST("/refresh", authH.Refresh)

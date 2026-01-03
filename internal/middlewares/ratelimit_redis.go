@@ -1,123 +1,26 @@
 package middlewares
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"strconv"
-	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+	"github.com/ulule/limiter/v3"
+	ginlimit "github.com/ulule/limiter/v3/drivers/middleware/gin"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
+	redisstore "github.com/ulule/limiter/v3/drivers/store/redis"
 
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
-// RateLimitResult contains the result of a rate limit check
-type RateLimitResult struct {
-	Allowed   bool
-	Remaining int
-	ResetAt   time.Time
-}
-
-// RedisRateLimiter implements rate limiting using Redis with sliding window algorithm
-// This solves:
-// 1. Multi-instance isolation (shared state in Redis)
-// 2. Fixed window bursting (sliding window prevents edge bursts)
-// 3. Proper rate limit headers (including X-RateLimit-Reset)
-type RedisRateLimiter struct {
-	client *redis.Client
-	rate   int
-	window time.Duration
-}
-
-// NewRedisRateLimiter creates a new Redis-based rate limiter
-func NewRedisRateLimiter(client *redis.Client, rate int, window time.Duration) *RedisRateLimiter {
-	return &RedisRateLimiter{
-		client: client,
-		rate:   rate,
-		window: window,
-	}
-}
-
-// Allow checks if a request is allowed and returns rate limit information
-// Uses sliding window algorithm to prevent burst attacks at window boundaries
-func (rl *RedisRateLimiter) Allow(ctx context.Context, key string) (*RateLimitResult, error) {
-	now := time.Now()
-	windowStart := now.Add(-rl.window)
-
-	// Redis key for this identifier
-	redisKey := fmt.Sprintf("ratelimit:%s", key)
-
-	// Use Redis pipeline for atomic operations
-	pipe := rl.client.Pipeline()
-
-	// Remove old entries (outside the sliding window)
-	pipe.ZRemRangeByScore(ctx, redisKey, "0", strconv.FormatInt(windowStart.Unix(), 10))
-
-	// Count current requests in the window
-	countCmd := pipe.ZCard(ctx, redisKey)
-
-	// Execute pipeline to get the count
-	_, err := pipe.Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("redis rate limit check failed: %w", err)
-	}
-	// Get count after adding current request
-	count := int(countCmd.Val())
-
-	// Check if allowed
-	allowed := count < rl.rate
-
-	// Only add the request if we're allowed
-	if allowed {
-		// Add current request with timestamp as score
-		pipe = rl.client.Pipeline()
-		pipe.ZAdd(ctx, redisKey, redis.Z{
-			Score:  float64(now.Unix()),
-			Member: strconv.FormatInt(now.UnixNano(), 10), // Unique number
-		})
-
-		// Set expiration on the key (cleanup)
-		pipe.Expire(ctx, redisKey, rl.window)
-		_, err = pipe.Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("redis rate limit update failed: %w", err)
-		}
-		count++ // Increment for remaining calculation
-	}
-
-	// Calculate remaining requests
-	remaining := max(rl.rate-count, 0)
-
-	// Calculate reset time (oldest entry in window + window duration)
-	var resetAt time.Time
-	if count > 0 && allowed {
-		// Get the oldest entry's timestamp
-		oldestCmd := rl.client.ZRangeWithScores(ctx, redisKey, 0, 0)
-		if len(oldestCmd.Val()) > 0 {
-			oldestTimestamp := int64(oldestCmd.Val()[0].Score)
-			resetAt = time.Unix(oldestTimestamp, 0).Add(rl.window)
-		} else {
-			resetAt = now.Add(rl.window)
-		}
-	} else {
-		// If blocked, calculate reset from current window
-		resetAt = now.Add(rl.window)
-	}
-
-	return &RateLimitResult{
-		Allowed:   allowed,
-		Remaining: remaining,
-		ResetAt:   resetAt,
-	}, nil
-}
-
-// createRateLimitHandler is the shared implementation for Redis-based rate limiting
-func createRateLimitHandler(ctx *app.Context, rate int, window time.Duration) gin.HandlerFunc {
+// createRateLimitHandler creates a rate limit handler using ulule/limiter
+// rateStr should be in ulule/limiter format: "100-M" (100 per minute), "50-H" (50 per hour), "10-S" (10 per second)
+func createRateLimitHandler(ctx *app.Context, rateStr string) gin.HandlerFunc {
 	if !ctx.Cfg.RateLimit.Enabled {
 		// Rate limiting disabled, return no-op middleware
 		return func(c *gin.Context) {
@@ -125,89 +28,121 @@ func createRateLimitHandler(ctx *app.Context, rate int, window time.Duration) gi
 		}
 	}
 
-	// Validate parameters
-	if rate <= 0 {
-		rate = 100
+	// Validate and set default if empty
+	if rateStr == "" {
+		rateStr = constants.RateLimit
 	}
-	if window <= 0 {
-		window = time.Minute
+
+	// Parse the rate limit
+	rateLimit, err := limiter.NewRateFromFormatted(rateStr)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("rate", rateStr).
+			Msg("failed to parse rate limit, using default")
+		rateLimit, _ = limiter.NewRateFromFormatted(constants.RateLimit)
 	}
+
+	var store limiter.Store
 
 	// Check if Redis is enabled
 	if ctx.Cfg.Redis.Enabled && ctx.Redis != nil {
-		limiter := NewRedisRateLimiter(ctx.Redis, rate, window)
-
-		return func(c *gin.Context) {
-			// Use IP address as the rate limit key
-			key := c.ClientIP()
-
-			// Check rate limit
-			result, err := limiter.Allow(c.Request.Context(), key)
-			if err != nil {
-				// If Redis fails, log error but allow request (fail open)
-				// In production, you might want to fail closed instead
-				log.Ctx(c.Request.Context()).Error().
-					Err(err).
-					Str("ip", key).
-					Msg("rate limit check failed, allowing request")
-				c.Next()
-				return
-			}
-
-			// Set rate limit headers (RFC 7231 compliant)
-			c.Header("X-RateLimit-Limit", strconv.Itoa(limiter.rate))
-			c.Header("X-RateLimit-Remaining", strconv.Itoa(result.Remaining))
-			c.Header("X-RateLimit-Reset", strconv.FormatInt(result.ResetAt.Unix(), 10))
-
-			if !result.Allowed {
-				log.Ctx(c.Request.Context()).Warn().
-					Str("ip", key).
-					Str("path", c.Request.URL.Path).
-					Int("rate", rate).
-					Int("reset_at", int(result.ResetAt.Unix())).
-					Msg("rate limit exceeded")
-
-				httpx.Fail(
-					c,
-					http.StatusTooManyRequests,
-					"RATE_LIMIT_EXCEEDED",
-					fmt.Sprintf("rate limit exceeded. retry after %d", result.ResetAt.Unix()),
-					nil,
-				)
-				c.Abort()
-				return
-			}
-
-			c.Next()
+		// Use Redis store for distributed rate limiting
+		var redisStore limiter.Store
+		redisStore, err = redisstore.NewStoreWithOptions(ctx.Redis, limiter.StoreOptions{
+			Prefix: "ratelimit",
+		})
+		if err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to create Redis rate limit store, falling back to memory")
+			// Fall back to memory store
+			store = memory.NewStore()
+		} else {
+			store = redisStore
 		}
+	} else {
+		// Use in-memory store (not suitable for multi-instance deployments)
+		log.Warn().Msg("Redis not enabled, using in-memory rate limiter (not suitable for multi-instance deployments)")
+		store = memory.NewStore()
 	}
 
-	// Redis not enabled, fall back to in-memory rate limiter
-	log.Warn().Msg("Redis not enabled, falling back to in-memory rate limiter (not suitable for multi-instance deployments)")
-	return RateLimit(rate, window)
+	// Create limiter instance
+	instance := limiter.New(store, rateLimit)
+
+	// Create Gin middleware
+	ginMiddleware := ginlimit.NewMiddleware(instance)
+
+	// Wrap with custom error handling to match error format
+	return func(c *gin.Context) {
+		// Call the ulule/limiter middleware
+		ginMiddleware(c)
+
+		// Check if the request was rate limited (ulule/limiter sets status 429)
+		if c.Writer.Status() == http.StatusTooManyRequests {
+			// Get rate limit info from headers (ulule/limiter sets these)
+			key := c.ClientIP()
+			limit := c.GetHeader("X-RateLimit-Limit")
+			reset := c.GetHeader("X-RateLimit-Reset")
+
+			log.Ctx(c.Request.Context()).Warn().
+				Str("ip", key).
+				Str("path", c.Request.URL.Path).
+				Str("rate", rateStr).
+				Str("limit", limit).
+				Str("reset", reset).
+				Msg("rate limit exceeded")
+
+			// Override the response to match your error format
+			httpx.Fail(
+				c,
+				http.StatusTooManyRequests,
+				apperror.ErrTooManyRequests.Code,
+				fmt.Sprintf("rate limit exceeded. retry after %s", reset),
+				nil,
+			)
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
 }
 
-// RateLimitRedis middleware using Redis for distributed rate limiting
-// Solves all three issues:
-// 1. Multi-instance: Shared Redis state across all replicas
-// 2. Sliding window: Prevents burst attacks at window boundaries
-// 3. Proper headers: Includes X-RateLimit-Reset with Unix timestamp
+// RateLimitRedis middleware using ulule/limiter with Redis backend
+// This is the global rate limiter that automatically skips OPTIONS requests and auth routes
+// (auth routes have their own stricter rate limiter)
 func RateLimitRedis(ctx *app.Context) gin.HandlerFunc {
-	rate := ctx.Cfg.RateLimit.Rate
-	if rate <= 0 {
-		rate = constants.RateLimit
+	rateStr := ctx.Cfg.RateLimit.Rate
+	if rateStr == "" {
+		rateStr = constants.RateLimit
 	}
 
-	window := time.Duration(ctx.Cfg.RateLimit.Window) * time.Second
-	if window <= 0 {
-		window = constants.RateLimitWindow * time.Second
-	}
+	// Get the base rate limit handler
+	baseHandler := createRateLimitHandler(ctx, rateStr)
 
-	return createRateLimitHandler(ctx, rate, window)
+	// Wrap it with skip logic for OPTIONS requests and auth routes
+	return func(c *gin.Context) {
+		// Skip rate limiting for OPTIONS (CORS preflight) requests
+		if c.Request.Method == http.MethodOptions {
+			c.Next()
+			return
+		}
+
+		// Skip global rate limiting for auth routes (they have their own stricter limits)
+		if strings.HasPrefix(c.Request.URL.Path, constants.APIAuthPath) {
+			c.Next()
+			return
+		}
+
+		// Apply rate limiting for all other routes
+		baseHandler(c)
+	}
 }
 
-// RateLimitRedisWithConfig creates a Redis-based rate limiter with custom rate and window
+// RateLimitRedisWithConfig creates a rate limiter with custom rate string
+// rateStr should be in ulule/limiter format: "100-M" (100 per minute), "50-H" (50 per hour), "10-S" (10 per second)
 // Use this for route-specific rate limiting (e.g., stricter limits for auth endpoints)
-func RateLimitRedisWithConfig(ctx *app.Context, rate int, window time.Duration) gin.HandlerFunc {
-	return createRateLimitHandler(ctx, rate, window)
+func RateLimitRedisWithConfig(ctx *app.Context, rateStr string) gin.HandlerFunc {
+	return createRateLimitHandler(ctx, rateStr)
 }

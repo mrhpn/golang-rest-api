@@ -31,11 +31,11 @@ type HTTPConfig struct {
 }
 
 // RateLimitConfig represents rate limit related config
+// Rate and AuthRate use ulule/limiter format: "100-M" (100 per minute), "50-H" (50 per hour), "10-S" (10 per second)
 type RateLimitConfig struct {
 	Enabled  bool
-	Rate     int // requests per window
-	AuthRate int
-	Window   int // window in seconds
+	Rate     string // rate limit in ulule/limiter format (e.g., "100-M" for 100 per minute)
+	AuthRate string // auth route rate limit in ulule/limiter format (e.g., "7-M" for 7 per minute)
 }
 
 // DBConfig represents database related config
@@ -108,9 +108,8 @@ func MustLoad() *Config {
 
 		RateLimit: RateLimitConfig{
 			Enabled:  getEnvAsBool("RATE_LIMIT_ENABLED", true),
-			Rate:     getEnvAsInt("RATE_LIMIT_RATE", constants.RateLimit),
-			AuthRate: getEnvAsInt("RATE_LIMIT_AUTH_RATE", constants.RateLimitAuth),
-			Window:   getEnvAsInt("RATE_LIMIT_WINDOW_SECOND", constants.RateLimitWindow),
+			Rate:     getEnv("RATE_LIMIT_RATE", constants.RateLimit),
+			AuthRate: getEnv("RATE_LIMIT_AUTH_RATE", constants.RateLimitAuth),
 		},
 
 		DB: DBConfig{
