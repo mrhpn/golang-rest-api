@@ -7,6 +7,15 @@ const (
 )
 
 const (
+	APIPrefix = "api"
+	CurrentAPIVersion = "v1"
+	APIAuthPrefix = "auth"
+
+	APIVersionPrefix = "/" + APIPrefix + "/" + CurrentAPIVersion
+	APIAuthPath      = APIVersionPrefix + "/" + APIAuthPrefix
+)
+
+const (
 	DefaultBcryptCost = 14
 )
 
@@ -47,7 +56,7 @@ const (
 	LogMaxSizeMB = 100
 
 	RateLimit       = 100
-	RateLimitAuth   = 5
+	RateLimitAuth   = 7
 	RateLimitWindow = 60
 
 	AccessTokenExpirationSecond  = 3600

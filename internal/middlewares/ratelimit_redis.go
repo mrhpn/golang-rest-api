@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
@@ -60,33 +61,42 @@ func (rl *RedisRateLimiter) Allow(ctx context.Context, key string) (*RateLimitRe
 	// Count current requests in the window
 	countCmd := pipe.ZCard(ctx, redisKey)
 
-	// Add current request with timestamp as score
-	pipe.ZAdd(ctx, redisKey, redis.Z{
-		Score:  float64(now.Unix()),
-		Member: strconv.FormatInt(now.UnixNano(), 10), // Unique member
-	})
-
-	// Set expiration on the key (cleanup)
-	pipe.Expire(ctx, redisKey, rl.window)
-
-	// Execute pipeline
+	// Execute pipeline to get the count
 	_, err := pipe.Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("redis rate limit check failed: %w", err)
 	}
-
+	
 	// Get count after adding current request
 	count := int(countCmd.Val())
+
+	// Check if allowed
+	allowed := count < rl.rate
+
+	// Only add the request if we're allowed
+	if allowed {
+		// Add current request with timestamp as score
+		pipe = rl.client.Pipeline()
+		pipe.ZAdd(ctx, redisKey, redis.Z{
+			Score: float64(now.Unix()),
+			Member: strconv.FormatInt(now.UnixNano(), 10), // Unique number
+		})
+
+		// Set expiration on the key (cleanup)
+		pipe.Expire(ctx, redisKey, rl.window)
+		_, err = pipe.Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("redis rate limit update failed: %w", err)
+		}
+		count++ // Increment for remaining calculation
+	}
 
 	// Calculate remaining requests
 	remaining := max(rl.rate-count, 0)
 
-	// Check if allowed
-	allowed := count <= rl.rate
-
 	// Calculate reset time (oldest entry in window + window duration)
 	var resetAt time.Time
-	if count > 0 {
+	if count > 0 && allowed {
 		// Get the oldest entry's timestamp
 		oldestCmd := rl.client.ZRangeWithScores(ctx, redisKey, 0, 0)
 		if len(oldestCmd.Val()) > 0 {
@@ -96,6 +106,7 @@ func (rl *RedisRateLimiter) Allow(ctx context.Context, key string) (*RateLimitRe
 			resetAt = now.Add(rl.window)
 		}
 	} else {
+		// If blocked, calculate reset from current window
 		resetAt = now.Add(rl.window)
 	}
 
@@ -185,12 +196,12 @@ func createRateLimitHandler(ctx *app.Context, rate int, window time.Duration) gi
 func RateLimitRedis(ctx *app.Context) gin.HandlerFunc {
 	rate := ctx.Cfg.RateLimit.Rate
 	if rate <= 0 {
-		rate = 100
+		rate = constants.RateLimit
 	}
 
 	window := time.Duration(ctx.Cfg.RateLimit.Window) * time.Second
 	if window <= 0 {
-		window = time.Minute
+		window = constants.RateLimitWindow * time.Second
 	}
 
 	return createRateLimitHandler(ctx, rate, window)

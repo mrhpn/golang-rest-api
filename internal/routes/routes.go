@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/mrhpn/go-rest-api/docs" // integrates docs
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
@@ -22,11 +23,11 @@ import (
 func Register(router *gin.Engine, ctx *app.Context) {
 	authRateLimitCount := ctx.Cfg.RateLimit.AuthRate
 	if authRateLimitCount <= 0 {
-		authRateLimitCount = 5 // Default: 5 requests per minute for auth endpoints
+		authRateLimitCount = constants.RateLimitAuth // Default: 5 requests per minute for auth endpoints
 	}
 
 	// API versioning: v1 is the current version
-	api := router.Group("/api/v1")
+	api := router.Group(constants.APIVersionPrefix)
 
 	// Swagger Route
 	// Access at: http://localhost:8080/swagger/index.html
@@ -68,7 +69,7 @@ func Register(router *gin.Engine, ctx *app.Context) {
 
 	// ----------------------- auth ----------------------- //
 	// Apply stricter rate limiting for auth endpoints using Redis
-	authGroup := api.Group("/auth")
+	authGroup := api.Group("/" + constants.APIAuthPrefix)
 	authGroup.Use(mw.RateLimitRedisWithConfig(ctx, authRateLimitCount, time.Minute))
 	{
 		authGroup.POST("/login", authH.Login)

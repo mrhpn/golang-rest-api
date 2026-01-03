@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +53,21 @@ func setupRouter(ctx *app.Context) *gin.Engine {
 	// Rate limiting middleware (if enabled)
 	// Uses Redis if available, falls back to in-memory if not
 	if ctx.Cfg.RateLimit.Enabled {
-		router.Use(middlewares.RateLimitRedis(ctx))
+		router.Use(func(c *gin.Context) {
+			// Skip rate limiting for OPTIONS (CORS preflight) requests
+			if c.Request.Method == "OPTIONS" {
+				c.Next()
+				return
+			}
+
+			// Skip global rate limitting for auth routes
+			if strings.HasPrefix(c.Request.URL.Path, constants.APIAuthPath) {
+				c.Next()
+				return
+			}
+			
+			router.Use(middlewares.RateLimitRedis(ctx))
+		})
 	}
 
 	// register all module routes
