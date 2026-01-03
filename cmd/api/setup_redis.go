@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/mrhpn/go-rest-api/internal/config"
-	"github.com/mrhpn/go-rest-api/internal/database"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+
+	"github.com/mrhpn/go-rest-api/internal/config"
+	"github.com/mrhpn/go-rest-api/internal/database"
 )
 
 func setupRedis(cfg *config.Config) *redis.Client {
@@ -21,7 +22,7 @@ func setupRedis(cfg *config.Config) *redis.Client {
 
 	client, err := database.ConnectRedis(&cfg.Redis)
 	if err != nil {
-		log.Fatal().Err(err).Msg("❌ Redis connection failed")
+		log.Fatal().Msg("failed to connect Redis.")
 	}
 
 	log.Info().Msg("✅ Redis connected successfully")

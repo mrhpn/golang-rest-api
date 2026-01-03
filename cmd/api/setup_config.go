@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/joho/godotenv"
+
 	"github.com/mrhpn/go-rest-api/internal/config"
 )
 

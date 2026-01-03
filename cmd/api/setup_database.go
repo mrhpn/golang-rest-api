@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/mrhpn/go-rest-api/internal/config"
-	"github.com/mrhpn/go-rest-api/internal/database"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+
+	"github.com/mrhpn/go-rest-api/internal/config"
+	"github.com/mrhpn/go-rest-api/internal/database"
 )
 
 func setupDatabase(cfg *config.Config) *gorm.DB {

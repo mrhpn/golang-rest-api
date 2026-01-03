@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/mrhpn/go-rest-api/internal/middlewares"
 	"github.com/mrhpn/go-rest-api/internal/routes"
@@ -43,7 +45,7 @@ func setupRouter(ctx *app.Context) *gin.Engine {
 	// Request timeout middleware
 	requestTimeout := time.Duration(ctx.Cfg.HTTP.RequestTimeoutSecond) * time.Second
 	if requestTimeout <= 0 {
-		requestTimeout = 30 * time.Second
+		requestTimeout = constants.RequestTimeoutSecond * time.Second
 	}
 	router.Use(middlewares.Timeout(requestTimeout))
 
@@ -57,7 +59,7 @@ func setupRouter(ctx *app.Context) *gin.Engine {
 	routes.Register(router, ctx)
 
 	// ram management
-	router.MaxMultipartMemory = 8 << 20
+	router.MaxMultipartMemory = constants.MaxMultipartMemory
 
 	return router
 }

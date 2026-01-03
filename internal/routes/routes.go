@@ -5,6 +5,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	_ "github.com/mrhpn/go-rest-api/docs" // integrates docs
 	"github.com/mrhpn/go-rest-api/internal/app"
 	mw "github.com/mrhpn/go-rest-api/internal/middlewares"
@@ -13,8 +16,6 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/modules/media"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/security"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // Register registers app's api endpoints

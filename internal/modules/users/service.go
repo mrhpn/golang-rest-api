@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mrhpn/go-rest-api/internal/apperror"
-	"github.com/mrhpn/go-rest-api/internal/security"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/mrhpn/go-rest-api/internal/apperror"
+	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
 // Service defines the business logic for managing users.
@@ -58,7 +59,7 @@ func (s *service) Create(ctx context.Context, req createUserRequest) (*User, err
 		user.Role = security.RoleEmployee
 	}
 
-	if err := s.repo.Create(ctx, user); err != nil {
+	if err = s.repo.Create(ctx, user); err != nil {
 		return nil, err
 	}
 

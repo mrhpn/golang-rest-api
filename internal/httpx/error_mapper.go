@@ -4,8 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"gorm.io/gorm"
+
+	"github.com/mrhpn/go-rest-api/internal/apperror"
 )
 
 type mappedError struct {
@@ -61,7 +62,10 @@ func mapKindToStatus(kind apperror.Kind) int {
 		return http.StatusUnauthorized
 	case apperror.Forbidden:
 		return http.StatusForbidden
-	default:
+	case apperror.TooManyRequests:
+		return http.StatusTooManyRequests
+	case apperror.Internal:
 		return http.StatusInternalServerError
 	}
+	return http.StatusInternalServerError
 }

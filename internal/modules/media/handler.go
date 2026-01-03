@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
@@ -28,41 +30,43 @@ type filePolicy struct {
 	MaxSize           int64
 }
 
-var policies = map[fileType]filePolicy{
-	fileTypeImage: {
-		AllowedExtensions: map[string]bool{
-			".jpg":  true,
-			".jpeg": true,
-			".png":  true,
-		},
-		MaxSize: 5 * 1024 * 1024, // 5MB
-	},
-	fileTypeVideo: {
-		AllowedExtensions: map[string]bool{
-			".mp4": true,
-			".mov": true,
-			".avi": true,
-		},
-		MaxSize: 50 * 1024 * 1024, // 50MB
-	},
-	fileTypeDoc: {
-		AllowedExtensions: map[string]bool{
-			".pdf":  true,
-			".docx": true,
-			".txt":  true,
-		},
-		MaxSize: 10 * 1024 * 1024, // 10MB
-	},
-}
-
 // Handler handles media-related HTTP endpoints such as uploads, retrieval, and media management operations.
 type Handler struct {
 	mediaService Service
+	policies     map[fileType]filePolicy
 }
 
 // NewHandler constructs a media Handler with its required service dependency.
 func NewHandler(mediaService Service) *Handler {
-	return &Handler{mediaService: mediaService}
+	return &Handler{
+		mediaService: mediaService,
+		policies: map[fileType]filePolicy{
+			fileTypeImage: {
+				AllowedExtensions: map[string]bool{
+					".jpg":  true,
+					".jpeg": true,
+					".png":  true,
+				},
+				MaxSize: constants.MaxImageSize,
+			},
+			fileTypeVideo: {
+				AllowedExtensions: map[string]bool{
+					".mp4": true,
+					".mov": true,
+					".avi": true,
+				},
+				MaxSize: constants.MaxVideoSize,
+			},
+			fileTypeDoc: {
+				AllowedExtensions: map[string]bool{
+					".pdf":  true,
+					".docx": true,
+					".txt":  true,
+				},
+				MaxSize: constants.MaxDocumentSize,
+			},
+		},
+	}
 }
 
 // UploadProfilePicture godoc
@@ -83,7 +87,7 @@ func (h *Handler) UploadProfilePicture(c *gin.Context) {
 
 func (h *Handler) handleUpload(c *gin.Context, subDir fileCategory, category fileType) {
 	// 1. get policy for type
-	policy, exists := policies[category]
+	policy, exists := h.policies[category]
 	if !exists {
 		httpx.FailWithError(c, errInvalidFileTypeCategory)
 		return

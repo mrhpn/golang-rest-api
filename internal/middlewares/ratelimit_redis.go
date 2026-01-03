@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mrhpn/go-rest-api/internal/app"
-	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+
+	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
 // RateLimitResult contains the result of a rate limit check
@@ -62,7 +63,7 @@ func (rl *RedisRateLimiter) Allow(ctx context.Context, key string) (*RateLimitRe
 	// Add current request with timestamp as score
 	pipe.ZAdd(ctx, redisKey, redis.Z{
 		Score:  float64(now.Unix()),
-		Member: fmt.Sprintf("%d", now.UnixNano()), // Unique member
+		Member: strconv.FormatInt(now.UnixNano(), 10), // Unique member
 	})
 
 	// Set expiration on the key (cleanup)

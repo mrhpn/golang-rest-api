@@ -1,9 +1,10 @@
 package main
 
 import (
+	"github.com/rs/zerolog/log"
+
 	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/mrhpn/go-rest-api/internal/modules/media"
-	"github.com/rs/zerolog/log"
 )
 
 func setupMedia(cfg *config.Config) media.Service {

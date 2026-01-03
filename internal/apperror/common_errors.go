@@ -21,4 +21,10 @@ var (
 		"INVALID_ID_FORMAT",
 		"invalid id format",
 	)
+
+	ErrTooManyRequests = New(
+		TooManyRequests,
+		"RATE_LIMIT_EXCEEDED",
+		"too many requests, please try again later",
+	)
 )

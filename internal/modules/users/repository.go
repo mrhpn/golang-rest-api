@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"gorm.io/gorm"
+
+	"github.com/mrhpn/go-rest-api/internal/apperror"
 )
 
 // Repository defines the persistence operations for user entities.

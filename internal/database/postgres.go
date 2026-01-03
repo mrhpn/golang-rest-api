@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/mrhpn/go-rest-api/internal/config"
+	"github.com/mrhpn/go-rest-api/internal/constants"
+)
+
+const (
+	maxElapsedTimeMillisecond = 200 * time.Millisecond
+	timeoutSecond             = 5 * time.Second
 )
 
 // CustomGormLogger bridges GORM logs to the application's logging system Zerolog
@@ -43,20 +50,20 @@ func (l *CustomGormLogger) Trace(ctx context.Context, begin time.Time, fc func()
 	// pull logger from context which contains request_id (and request-scoped fields)
 	lgr := log.Ctx(ctx)
 
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	switch {
+	case err != nil && !errors.Is(err, gorm.ErrRecordNotFound):
 		lgr.Error().
 			Err(err).
 			Dur("elapsed", elapsed).
 			Int64("rows", rows).
 			Msg(sql)
-	} else if elapsed > 200*time.Millisecond {
+	case elapsed > maxElapsedTimeMillisecond:
 		lgr.Warn().
 			Dur("elapsed", elapsed).
 			Int64("rows", rows).
 			Str("perf", "SLOW_QUERY").
 			Msgf("%s", sql)
-	} else {
-		// log all queries in development
+	default:
 		lgr.Debug().
 			Dur("elapsed", elapsed).
 			Int64("rows", rows).
@@ -79,12 +86,12 @@ func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 	// Retry connection with exponential backoff
 	maxAttempts := dbCfg.RetryAttempts
 	if maxAttempts <= 0 {
-		maxAttempts = 3
+		maxAttempts = constants.DBMaxRetryAttempts
 	}
 
 	retryDelay := time.Duration(dbCfg.RetryDelaySecond) * time.Second
 	if retryDelay <= 0 {
-		retryDelay = 2 * time.Second
+		retryDelay = constants.DBRetryDelaySecond * time.Second
 	}
 
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
@@ -118,36 +125,36 @@ func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 	// Set max open connections
 	maxOpenConns := dbCfg.MaxOpenConns
 	if maxOpenConns <= 0 {
-		maxOpenConns = 25
+		maxOpenConns = constants.DBMaxOpenConns
 	}
 	sqlDB.SetMaxOpenConns(maxOpenConns)
 
 	// Set max idle connections
 	maxIdleConns := dbCfg.MaxIdleConns
 	if maxIdleConns <= 0 {
-		maxIdleConns = 10
+		maxIdleConns = constants.DBMaxIdleConns
 	}
 	sqlDB.SetMaxIdleConns(maxIdleConns)
 
 	// Set connection max life time
 	connMaxLifetime := time.Duration(dbCfg.ConnMaxLifetimeMinute) * time.Minute
 	if connMaxLifetime <= 0 {
-		connMaxLifetime = time.Hour
+		connMaxLifetime = constants.DBMaxLifetimeMinute * time.Minute
 	}
 	sqlDB.SetConnMaxLifetime(connMaxLifetime)
 
 	// Set connection max idle time
 	connMaxIdleTime := time.Duration(dbCfg.ConnMaxIdleTimeMinute) * time.Minute
 	if connMaxIdleTime <= 0 {
-		connMaxIdleTime = 30 * time.Minute
+		connMaxIdleTime = constants.DBConnMaxIdleTimeMinute * time.Minute
 	}
 	sqlDB.SetConnMaxIdleTime(connMaxIdleTime)
 
 	// Verify connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutSecond)
 	defer cancel()
 
-	if err := sqlDB.PingContext(ctx); err != nil {
+	if err = sqlDB.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
@@ -169,7 +176,7 @@ func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 func registerQueryTimeoutCallback(db *gorm.DB, dbCfg *config.DBConfig) {
 	queryTimeout := time.Duration(dbCfg.QueryTimeoutSecond) * time.Second
 	if queryTimeout <= 0 {
-		queryTimeout = 30 * time.Second
+		queryTimeout = constants.DBMaxQueryTimeoutSecond * time.Second
 	}
 
 	applyTimeout := func(db *gorm.DB) {

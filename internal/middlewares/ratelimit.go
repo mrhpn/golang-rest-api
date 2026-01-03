@@ -1,14 +1,22 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/rs/zerolog/log"
+
+	"github.com/mrhpn/go-rest-api/internal/apperror"
+	"github.com/mrhpn/go-rest-api/internal/constants"
+	"github.com/mrhpn/go-rest-api/internal/httpx"
+)
+
+const (
+	cleanupTime     = 5 * time.Second
+	maxLastSeenTime = 10 * time.Minute
 )
 
 // RateLimiter implements a simple in-memory rate limiter using token bucket algorithm
@@ -35,7 +43,7 @@ func NewRateLimiter(rate int, window time.Duration) *RateLimiter {
 		visitors: make(map[string]*visitor),
 		rate:     rate,
 		window:   window,
-		cleanup:  time.NewTicker(5 * time.Minute), // cleanup old visitors every 5 minutes
+		cleanup:  time.NewTicker(cleanupTime), // cleanup old visitors every 5 minutes
 	}
 
 	// Start cleanup goroutine
@@ -50,7 +58,7 @@ func (rl *RateLimiter) cleanupVisitors() {
 		now := time.Now()
 		for ip, v := range rl.visitors {
 			v.mu.Lock()
-			if now.Sub(v.lastSeen) > 10*time.Minute {
+			if now.Sub(v.lastSeen) > maxLastSeenTime {
 				delete(rl.visitors, ip)
 			}
 			v.mu.Unlock()
@@ -102,10 +110,10 @@ func (rl *RateLimiter) allow(ip string) bool {
 // Default: 100 requests per minute
 func RateLimit(rate int, window time.Duration) gin.HandlerFunc {
 	if rate <= 0 {
-		rate = 100 // default: 100 requests per minute
+		rate = constants.RateLimit
 	}
 	if window <= 0 {
-		window = time.Minute
+		window = constants.RateLimitWindow
 	}
 
 	limiter := NewRateLimiter(rate, window)
@@ -122,8 +130,8 @@ func RateLimit(rate int, window time.Duration) gin.HandlerFunc {
 			httpx.Fail(
 				c,
 				http.StatusTooManyRequests,
-				"RATE_LIMIT_EXCEEDED",
-				"too many requests, please try again later",
+				apperror.ErrTooManyRequests.Code,
+				apperror.ErrTooManyRequests.Message,
 				nil,
 			)
 			c.Abort()
@@ -131,8 +139,8 @@ func RateLimit(rate int, window time.Duration) gin.HandlerFunc {
 		}
 
 		// Add rate limit headers
-		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", limiter.rate))
-		// Note: Remaining count could be enhanced with more sophisticated tracking
+		c.Header("X-RateLimit-Limit", strconv.Itoa(limiter.rate))
+		// todo: to add x-ratelimit-remaining and reset
 
 		c.Next()
 	}

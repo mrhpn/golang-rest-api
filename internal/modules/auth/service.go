@@ -3,9 +3,10 @@ package auth
 import (
 	"context"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/security"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // Service - auth service interface
@@ -35,7 +36,7 @@ func (s *service) Login(ctx context.Context, email, password string) (*security.
 	}
 
 	// 2. verify password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, nil, errInvalidCrendentials
 	}
 

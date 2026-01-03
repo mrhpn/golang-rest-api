@@ -5,35 +5,43 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+
+	"github.com/mrhpn/go-rest-api/internal/config"
+)
+
+const (
+	poolSize           = 10
+	minIdleConns       = 5
+	dialTimeout        = 5 * time.Second
+	readTimeout        = 3 * time.Second
+	writeTimeout       = 3 * time.Second
+	connMaxIdleTime    = 5 * time.Minute
+	connMaxLifetime    = 30 * time.Minute
+	healthCheckTimeout = 5 * time.Second
 )
 
 // ConnectRedis establishes a connection to Redis
 func ConnectRedis(cfg *config.RedisConfig) (*redis.Client, error) {
-	if !cfg.Enabled {
-		return nil, nil // Redis is optional
-	}
-
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		Password: cfg.Password,
 		DB:       cfg.DB,
 		// Connection pool settings
-		PoolSize:     10,
-		MinIdleConns: 5,
+		PoolSize:     poolSize,
+		MinIdleConns: minIdleConns,
 		// Timeouts
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
+		DialTimeout:  dialTimeout,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
 		// Connection lifecycle
-		ConnMaxIdleTime: 5 * time.Minute,
-		ConnMaxLifetime: 30 * time.Minute,
+		ConnMaxIdleTime: connMaxIdleTime,
+		ConnMaxLifetime: connMaxLifetime,
 	})
 
 	// Test connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), healthCheckTimeout)
 	defer cancel()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {

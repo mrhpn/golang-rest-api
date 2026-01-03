@@ -1,10 +1,14 @@
 package security
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/mrhpn/go-rest-api/internal/constants"
+)
 
 // HashPassword hashes a raw string using bcrypt
 func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), constants.DefaultBcryptCost)
 	return string(bytes), err
 }
 

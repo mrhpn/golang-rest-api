@@ -2,17 +2,19 @@ package middlewares
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/security"
-	"github.com/rs/zerolog/log"
 )
 
 type contextKey string
@@ -64,7 +66,7 @@ func RequireAuth(ctx *app.Context) gin.HandlerFunc {
 func AllowRoles(allowedRoles ...security.Role) gin.HandlerFunc {
 	// validation check on startup
 	for _, role := range allowedRoles {
-		if !security.ValidRoles[role] {
+		if !security.IsValidRole(role) {
 			panic(fmt.Sprintf("invalid role '%s' passed to AllowRoles middleware. check your route definitions!", role))
 		}
 	}
@@ -110,7 +112,7 @@ func AllowRoles(allowedRoles ...security.Role) gin.HandlerFunc {
 func GetUser(ctx context.Context) (*security.UserClaims, error) {
 	claims, ok := ctx.Value(userKey).(*security.UserClaims)
 	if !ok || claims == nil {
-		return nil, fmt.Errorf("user identity not found in context")
+		return nil, errors.New("user identity not found in context")
 	}
 	return claims, nil
 }

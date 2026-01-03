@@ -9,9 +9,9 @@ import (
 
 // UserClaims describes JWT user claims
 type UserClaims struct {
+	jwt.RegisteredClaims
 	UserID string `json:"user_id"`
 	Role   Role   `json:"role"`
-	jwt.RegisteredClaims
 }
 
 // TokenPair consists of AccessToken and RefreshToken

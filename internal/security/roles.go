@@ -18,10 +18,12 @@ func (r Role) String() string {
 	return string(r)
 }
 
-// ValidRoles verifies if a role is valid.
-var ValidRoles = map[Role]bool{
-	RoleSuperAdmin: true,
-	RoleAdmin:      true,
-	RoleEmployee:   true,
-	RoleUser:       true,
+// IsValidRole reports whether the given role is supported by the system.
+func IsValidRole(role Role) bool {
+	switch role {
+	case RoleSuperAdmin, RoleAdmin, RoleEmployee, RoleUser:
+		return true
+	default:
+		return false
+	}
 }

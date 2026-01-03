@@ -1,4 +1,3 @@
-// Package httpx provides utilities for binding request data to structs and validating input.
 package httpx
 
 import (
@@ -6,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/stringx"
 	"github.com/mrhpn/go-rest-api/internal/validation"

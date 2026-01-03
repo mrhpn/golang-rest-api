@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"

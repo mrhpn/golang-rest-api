@@ -5,13 +5,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/mrhpn/go-rest-api/internal/config"
 )
 
-// SetupLogger sets up the logger for the application using zerolog.
+// SetupLogger sets up the global zerolog config and returns the logger.
 func SetupLogger(logCfg *config.LogConfig, env string) zerolog.Logger {
 	var writer io.Writer
 
@@ -21,9 +22,9 @@ func SetupLogger(logCfg *config.LogConfig, env string) zerolog.Logger {
 			TimeFormat: "15:04:05",
 		}
 	} else {
-		// production: write json to both Stdout (for docker/k8s logging) and a rotating log file
+		// production: write json to both Stdout (for docker/k8s logging) and a rotating log file.
 
-		// ensure log directory exists
+		// ensure log directory exists.
 		_ = os.MkdirAll(logCfg.Path, 0750)
 
 		rotatingWriter := &lumberjack.Logger{
@@ -47,7 +48,9 @@ func SetupLogger(logCfg *config.LogConfig, env string) zerolog.Logger {
 		Timestamp().
 		Logger()
 
+	//nolint:reassign // intentional global logger initialization
 	log.Logger = l
+	//nolint:reassign // required for zerolog context logging
 	zerolog.DefaultContextLogger = &l
 
 	return l

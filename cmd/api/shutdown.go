@@ -8,9 +8,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+
+	"github.com/mrhpn/go-rest-api/internal/config"
+)
+
+const (
+	timeoutSecond   = 5 * time.Second
+	shutdownTimeout = 15 * time.Second
 )
 
 func gracefulShutdown(cfg *config.Config, srv *http.Server, db *gorm.DB) {
@@ -33,7 +39,6 @@ func gracefulShutdown(cfg *config.Config, srv *http.Server, db *gorm.DB) {
 
 	// create context with timeout for graceful shutdown
 	// stops accepting new requests, waits for existing requests to finish
-	shutdownTimeout := 15 * time.Second
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
@@ -51,7 +56,7 @@ func gracefulShutdown(cfg *config.Config, srv *http.Server, db *gorm.DB) {
 		log.Error().Err(err).Msg("❌ Failed to get database connection")
 	} else if sqlDB != nil {
 		// Close with timeout
-		closeCtx, closeCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		closeCtx, closeCancel := context.WithTimeout(context.Background(), timeoutSecond)
 		defer closeCancel()
 
 		closed := make(chan error, 1)
@@ -60,7 +65,7 @@ func gracefulShutdown(cfg *config.Config, srv *http.Server, db *gorm.DB) {
 		}()
 
 		select {
-		case err := <-closed:
+		case err = <-closed:
 			if err != nil {
 				log.Error().Err(err).Msg("❌ Failed to close database connection")
 			} else {

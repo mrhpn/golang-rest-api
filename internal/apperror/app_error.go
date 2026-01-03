@@ -21,6 +21,8 @@ const (
 	BadRequest Kind = "BAD_REQUEST"
 	// Internal indicates an unexpected internal server error.
 	Internal Kind = "INTERNAL"
+	// TooManyRequests indicates client sends too many requests to server.
+	TooManyRequests Kind = "RATE_LIMIT_EXCEEDED"
 )
 
 // AppError represents an application-level error with structured information

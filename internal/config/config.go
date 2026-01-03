@@ -5,6 +5,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/mrhpn/go-rest-api/internal/constants"
 )
 
 // Config represents the full application configuration loaded at startup.
@@ -100,25 +102,25 @@ func MustLoad() *Config {
 
 		HTTP: HTTPConfig{
 			AllowedOrigins:       allowedOrigins,
-			MaxRequestBodySize:   int64(getEnvAsInt("MAX_REQUEST_BODY_SIZE_MB", 50)) * 1024 * 1024,
-			RequestTimeoutSecond: getEnvAsInt("REQUEST_TIMEOUT_SECOND", 30),
+			MaxRequestBodySize:   constants.RequestMaxBodySizeMB,
+			RequestTimeoutSecond: constants.RequestTimeoutSecond,
 		},
 
 		RateLimit: RateLimitConfig{
 			Enabled:  getEnvAsBool("RATE_LIMIT_ENABLED", true),
-			Rate:     getEnvAsInt("RATE_LIMIT_RATE", 100),
-			AuthRate: getEnvAsInt("RATE_LIMIT_AUTH_RATE", 5),
-			Window:   getEnvAsInt("RATE_LIMIT_WINDOW_SECOND", 60),
+			Rate:     getEnvAsInt("RATE_LIMIT_RATE", constants.RateLimit),
+			AuthRate: getEnvAsInt("RATE_LIMIT_AUTH_RATE", constants.RateLimitAuth),
+			Window:   getEnvAsInt("RATE_LIMIT_WINDOW_SECOND", constants.RateLimitWindow),
 		},
 
 		DB: DBConfig{
-			MaxOpenConns:          getEnvAsInt("DB_MAX_OPEN_CONNS", 25),
-			MaxIdleConns:          getEnvAsInt("DB_MAX_IDLE_CONNS", 10),
-			ConnMaxLifetimeMinute: getEnvAsInt("DB_CONN_MAX_LIFETIME_MINUTE", 60),
-			ConnMaxIdleTimeMinute: getEnvAsInt("DB_CONN_MAX_IDLE_TIME_MINUTE", 30),
-			QueryTimeoutSecond:    getEnvAsInt("DB_QUERY_TIMEOUT_SECOND", 30),
-			RetryAttempts:         getEnvAsInt("DB_RETRY_ATTEMPTS", 3),
-			RetryDelaySecond:      getEnvAsInt("DB_RETRY_DELAY_SECOND", 2),
+			MaxOpenConns:          getEnvAsInt("DB_MAX_OPEN_CONNS", constants.DBMaxOpenConns),
+			MaxIdleConns:          getEnvAsInt("DB_MAX_IDLE_CONNS", constants.DBMaxIdleConns),
+			ConnMaxLifetimeMinute: getEnvAsInt("DB_CONN_MAX_LIFETIME_MINUTE", constants.DBMaxLifetimeMinute),
+			ConnMaxIdleTimeMinute: getEnvAsInt("DB_CONN_MAX_IDLE_TIME_MINUTE", constants.DBConnMaxIdleTimeMinute),
+			QueryTimeoutSecond:    getEnvAsInt("DB_QUERY_TIMEOUT_SECOND", constants.DBMaxQueryTimeoutSecond),
+			RetryAttempts:         getEnvAsInt("DB_RETRY_ATTEMPTS", constants.DBMaxRetryAttempts),
+			RetryDelaySecond:      getEnvAsInt("DB_RETRY_DELAY_SECOND", constants.DBRetryDelaySecond),
 		},
 
 		Redis: RedisConfig{
@@ -133,16 +135,16 @@ func MustLoad() *Config {
 
 		JWT: JWTConfig{
 			Secret:                       getEnv("JWT_SECRET", ""),
-			AccessTokenExpirationSecond:  getEnvAsInt("ACCESS_TOKEN_EXPIRATION_TIME_SECOND", 3600),
-			RefreshTokenExpirationSecond: getEnvAsInt("REFRESH_TOKEN_EXPIRATION_TIME_SECOND", 86400),
+			AccessTokenExpirationSecond:  getEnvAsInt("ACCESS_TOKEN_EXPIRATION_TIME_SECOND", constants.AccessTokenExpirationSecond),
+			RefreshTokenExpirationSecond: getEnvAsInt("REFRESH_TOKEN_EXPIRATION_TIME_SECOND", constants.RefreshTokenExpirationSecond),
 		},
 
 		Log: LogConfig{
 			Path:           getEnv("LOG_PATH", "./logs"),
 			Level:          getEnv("LOG_LEVEL", "INFO"),
-			MaxSizeMB:      getEnvAsInt("LOG_MAX_SIZE_MB", 100),
-			MaxBackupCount: getEnvAsInt("LOG_MAX_BACKUP_COUNT", 8),
-			MaxAgeDay:      getEnvAsInt("LOG_MAX_DAY", 30),
+			MaxSizeMB:      getEnvAsInt("LOG_MAX_SIZE_MB", constants.LogMaxSizeMB),
+			MaxBackupCount: getEnvAsInt("LOG_MAX_BACKUP_COUNT", constants.LogMaxBackup),
+			MaxAgeDay:      getEnvAsInt("LOG_MAX_DAY", constants.LogMaxDay),
 			Compress:       getEnvAsBool("LOG_COMPRESS", true),
 		},
 

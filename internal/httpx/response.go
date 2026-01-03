@@ -1,6 +1,8 @@
 package httpx
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -70,7 +72,7 @@ func FailWithError(c *gin.Context, err error) {
 	// - 4xx errors: log as Warn (client issues, but useful for debugging)
 	// - Unexpected errors: always log as Error
 	logEvent := logger.Error()
-	if mapped.Status < 500 {
+	if mapped.Status < http.StatusInternalServerError {
 		logEvent = logger.Warn()
 	}
 

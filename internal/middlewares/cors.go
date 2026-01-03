@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/mrhpn/go-rest-api/internal/app"
 )
 
@@ -30,7 +31,7 @@ func CORS(ctx *app.Context) gin.HandlerFunc {
 		}
 
 		// handle preflight
-		if c.Request.Method == "OPTIONS" {
+		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}

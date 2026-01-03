@@ -6,15 +6,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/rs/zerolog/log"
+
+	"github.com/mrhpn/go-rest-api/internal/constants"
+	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
 // Timeout creates a middleware that cancels the request context after the specified duration
 // This prevents long-running requests from consuming resources indefinitely
 func Timeout(timeout time.Duration) gin.HandlerFunc {
 	if timeout <= 0 {
-		timeout = 30 * time.Second // default: 30 seconds
+		timeout = constants.RequestTimeoutSecond * time.Second
 	}
 
 	return func(c *gin.Context) {

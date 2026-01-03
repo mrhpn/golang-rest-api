@@ -11,8 +11,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+
 	"github.com/mrhpn/go-rest-api/internal/apperror"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 )
+
+const healthCheckTimeout = 5 * time.Second
+const bucketCreateTimeout = 10 * time.Second
 
 // minioService implements the Service interface using MinIO as the underlying object storage backend.
 type minioService struct {
@@ -31,7 +36,7 @@ func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool)
 	}
 
 	// 1. auto-create bucket if it doesn't exist
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), bucketCreateTimeout)
 	defer cancel()
 
 	exists, err := client.BucketExists(ctx, bucketName)
@@ -72,7 +77,7 @@ func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool)
 func (s *minioService) Upload(file *multipart.FileHeader, subDir fileCategory) (string, error) {
 	ctx := context.Background()
 
-	src, err := file.Open()
+	src, err := file.Open() // 80
 	if err != nil {
 		return "", apperror.Wrap(
 			apperror.Internal,
@@ -93,15 +98,23 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir fileCategory) (
 	var opts *imageOptions
 	switch subDir {
 	case fileCategoryProfiles:
-		opts = &imageOptions{MaxWidth: 400, MaxHeight: 400, Quality: 75}
+		opts = &imageOptions{
+			MaxWidth:  constants.MaxProfileImageWidth,
+			MaxHeight: constants.MaxProfileImageHeight,
+			Quality:   constants.MaxProfileImageQuality,
+		}
 	case fileCategoryThumbnails:
-		opts = &imageOptions{MaxWidth: 800, MaxHeight: 600, Quality: 80}
+		opts = &imageOptions{
+			MaxWidth:  constants.MaxThumbnailImageWidth,
+			MaxHeight: constants.MaxThumbnailImageHeight,
+			Quality:   constants.MaxThumbnailImageQuality,
+		}
 	}
 
 	// 3. apply processing if options were found
 	if opts != nil {
-		processed, newSize, err := processImage(src, *opts)
-		if err == nil {
+		processed, newSize, pErr := processImage(src, *opts) // 116
+		if pErr == nil {
 			reader = processed
 			size = newSize
 			contentType = "image/jpeg"
@@ -130,7 +143,7 @@ func (s *minioService) Upload(file *multipart.FileHeader, subDir fileCategory) (
 
 // HealthCheck verifies that MinIO is accessible and the bucket exists
 func (s *minioService) HealthCheck(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, healthCheckTimeout)
 	defer cancel()
 
 	// Check if bucket exists and is accessible
