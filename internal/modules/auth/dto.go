@@ -18,9 +18,10 @@ type LoginResponse struct {
 }
 
 type LoginUserResponse struct {
-	ID    string        `json:"id"`
-	Email string        `json:"email"`
-	Role  security.Role `json:"role"`
+	ID     string              `json:"id"`
+	Email  string              `json:"email"`
+	Role   security.Role       `json:"role"`
+	Status security.UserStatus `json:"status"`
 }
 
 // RefreshTokenResponse constructs refresh token response structure.
@@ -31,9 +32,10 @@ type RefreshTokenResponse struct {
 // ToLoginUserResponse converts a User model to LoginUserResponse DTO
 func ToLoginUserResponse(user *users.User) LoginUserResponse {
 	return LoginUserResponse{
-		ID:    user.ID,
-		Email: user.Email,
-		Role:  user.Role,
+		ID:     user.ID,
+		Email:  user.Email,
+		Role:   user.Role,
+		Status: user.Status,
 	}
 }
 

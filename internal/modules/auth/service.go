@@ -62,8 +62,9 @@ func (s *service) RefreshToken(ctx context.Context, refreshToken string) (string
 		return "", security.ErrInvalidToken
 	}
 
-	// todo:
-	// if user.status == "Blocked" { return "", security.ErrBlockedUser }
+	if user.Status == security.UserStatusBlocked {
+		return "", security.ErrBlockedUser
+	}
 
 	// 3. generate ONLY a new access token
 	tokens, err := s.securityHandler.GenerateTokenPair(user.ID, user.Role)

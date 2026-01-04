@@ -10,6 +10,8 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/stringx"
 )
 
+// SortSearchPolicy contains SortableCols and SearchableCols. Contents containing in both must match DB column names or model field names
+// Mapping assumes snake_case DB columns
 type SortSearchPolicy struct {
 	SortableCols   []string
 	SearchableCols []string
@@ -43,7 +45,7 @@ type QueryOptions struct {
 	// Sorting
 	SortBy          string
 	Order           string
-	SortableColumns []string // Fields allowed for sorting
+	SortableColumns map[string]string // Fields allowed for sorting
 
 	// Model for field validation
 	Model any
@@ -62,13 +64,6 @@ func NewQueryOptions(ql *QueryList, sortSearchPolicy SortSearchPolicy) *QueryOpt
 		ql.Limit = constants.PaginationMaxLimit
 	}
 
-	// Normalize order to lowercase
-	if ql.Order != "" {
-		ql.Order = strings.ToLower(ql.Order)
-	} else {
-		ql.Order = "desc" // Default order
-	}
-
 	return &QueryOptions{
 		Page:              ql.Page,
 		Limit:             ql.Limit,
@@ -78,8 +73,8 @@ func NewQueryOptions(ql *QueryList, sortSearchPolicy SortSearchPolicy) *QueryOpt
 		SearchableColumns: sortSearchPolicy.SearchableCols,
 		ExactMatch:        ql.ExactMatch,
 		SortBy:            ql.SortBy,
-		Order:             ql.Order,
-		SortableColumns:   sortSearchPolicy.SortableCols,
+		Order:             normalizeOrder(ql.Order),
+		SortableColumns:   buildSortableFieldMap(sortSearchPolicy.SortableCols),
 	}
 }
 
@@ -91,13 +86,12 @@ func Paginate(opts *QueryOptions) func(db *gorm.DB) *gorm.DB {
 
 		// 2. Apply Sorting
 		sortField := "created_at" // default
-		for _, allowed := range opts.SortableColumns {
-			if stringx.ToSnakeCase(opts.SortBy) == stringx.ToSnakeCase(allowed) {
-				sortField = stringx.ToSnakeCase(allowed)
-				break
+		if opts.SortBy != "" {
+			if col, ok := opts.SortableColumns[stringx.ToSnakeCase(opts.SortBy)]; ok {
+				sortField = col
 			}
 		}
-		db = db.Order(sortField + " " + strings.ToUpper(opts.Order))
+		db = db.Order(sortField + " " + opts.Order) // opts.Order is safe. already validated in NewQueryOptions!
 
 		// 3. Apply Pagination
 		return db.Limit(opts.Limit).Offset(opts.Offset)
@@ -158,5 +152,23 @@ func BuildMeta(opts *QueryOptions, total int64) *httpx.PaginationMeta {
 		TotalPages: totalPages,
 		HasNext:    isValidPage && opts.Page < totalPages,
 		HasPrev:    isValidPage && opts.Page > 1,
+	}
+}
+
+func buildSortableFieldMap(fields []string) map[string]string {
+	m := make(map[string]string, len(fields))
+	for _, f := range fields {
+		key := stringx.ToSnakeCase(f)
+		m[key] = key
+	}
+	return m
+}
+
+func normalizeOrder(order string) string {
+	switch strings.ToUpper(order) {
+	case "ASC":
+		return "ASC"
+	default:
+		return "DESC"
 	}
 }

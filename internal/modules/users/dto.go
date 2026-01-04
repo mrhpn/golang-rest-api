@@ -18,10 +18,11 @@ type CreateUserRequest struct {
 
 // UserResponse returns necessary data about a user
 type UserResponse struct {
-	ID        string        `json:"id"`
-	Email     string        `json:"email"`
-	Role      security.Role `json:"role"`
-	CreatedAt string        `json:"created_at"`
+	ID        string              `json:"id"`
+	Email     string              `json:"email"`
+	Role      security.Role       `json:"role"`
+	Status    security.UserStatus `json:"status"`
+	CreatedAt string              `json:"created_at"`
 }
 
 // ToUserResponse converts a User model to UserResponse DTO
@@ -30,6 +31,7 @@ func ToUserResponse(user *User) UserResponse {
 		ID:        user.ID,
 		Email:     user.Email,
 		Role:      user.Role,
+		Status:    user.Status,
 		CreatedAt: user.CreatedAt.Format(time.RFC3339),
 	}
 }

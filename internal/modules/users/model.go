@@ -9,7 +9,8 @@ import (
 type User struct {
 	models.BaseModel
 
-	Email        string        `gorm:"uniqueIndex;not null"`
-	PasswordHash string        `gorm:"not null"`
-	Role         security.Role `gorm:"type:varchar(20);not null;default:'user'"`
+	Email        string              `gorm:"uniqueIndex;not null"`
+	PasswordHash string              `gorm:"not null"`
+	Role         security.Role       `gorm:"type:varchar(20);not null;default:'user'"`
+	Status       security.UserStatus `gorm:"type:varchar(20);not null;default:'inactive'"`
 }
