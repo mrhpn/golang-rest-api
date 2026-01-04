@@ -77,7 +77,7 @@ func NewHandler(mediaService Service) *Handler {
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Param			file	formData	file	true	"Image file (jpg, jpeg, png)"
-//	@Success		201		{object}	httpx.SuccessResponse{data=media.MediaResponse}
+//	@Success		201		{object}	httpx.SuccessResponse{data=media.Response}
 //	@Failure		400		{object}	httpx.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/media/upload/profile [post]

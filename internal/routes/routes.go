@@ -83,6 +83,8 @@ func Register(router *gin.Engine, ctx *app.Context) {
 		usersGroup.POST("", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Create)
 		usersGroup.DELETE("/:id", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Delete)
 		usersGroup.PUT("/:id/restore", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Restore)
+		usersGroup.PUT("/:id/block", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Block)
+		usersGroup.PUT("/:id/reactivate", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Reactivate)
 	}
 
 	// ----------------------- media ----------------------- //

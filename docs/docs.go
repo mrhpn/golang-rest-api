@@ -131,7 +131,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.Response"
                         }
                     }
                 }
@@ -151,7 +151,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.Response"
                         }
                     }
                 }
@@ -171,13 +171,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.Response"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/health.HealthResponse"
+                            "$ref": "#/definitions/health.Response"
                         }
                     }
                 }
@@ -222,7 +222,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/media.MediaResponse"
+                                            "$ref": "#/definitions/media.Response"
                                         }
                                     }
                                 }
@@ -519,6 +519,116 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{id}/block": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Block a user by their ULID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Block user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/httpx.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/httpx.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/httpx.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/reactivate": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Reactivate a user by their ULID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Reactivate user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/users.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/httpx.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/httpx.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/httpx.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}/restore": {
             "put": {
                 "security": [
@@ -610,6 +720,9 @@ const docTemplate = `{
                 },
                 "role": {
                     "$ref": "#/definitions/security.Role"
+                },
+                "status": {
+                    "$ref": "#/definitions/security.UserStatus"
                 }
             }
         },
@@ -621,7 +734,7 @@ const docTemplate = `{
                 }
             }
         },
-        "health.HealthResponse": {
+        "health.Response": {
             "type": "object",
             "properties": {
                 "checks": {
@@ -698,7 +811,7 @@ const docTemplate = `{
                 }
             }
         },
-        "media.MediaResponse": {
+        "media.Response": {
             "type": "object",
             "properties": {
                 "url": {
@@ -719,6 +832,19 @@ const docTemplate = `{
                 "RoleAdmin",
                 "RoleEmployee",
                 "RoleUser"
+            ]
+        },
+        "security.UserStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "inactive",
+                "blocked"
+            ],
+            "x-enum-varnames": [
+                "UserStatusActive",
+                "UserStatusInactive",
+                "UserStatusBlocked"
             ]
         },
         "users.CreateUserRequest": {
@@ -764,6 +890,9 @@ const docTemplate = `{
                 },
                 "role": {
                     "$ref": "#/definitions/security.Role"
+                },
+                "status": {
+                    "$ref": "#/definitions/security.UserStatus"
                 }
             }
         }

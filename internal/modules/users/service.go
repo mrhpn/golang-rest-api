@@ -21,6 +21,8 @@ type Service interface {
 	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, *httpx.PaginationMeta, error)
 	Delete(ctx context.Context, id string) error
 	Restore(ctx context.Context, id string) error
+	Block(ctx context.Context, id string) error
+	Reactivate(ctx context.Context, id string) error
 }
 
 type service struct {
@@ -117,6 +119,36 @@ func (s *service) Restore(ctx context.Context, id string) error {
 	}
 
 	log.Ctx(ctx).Info().Str("user_id", id).Msg("user restored")
+
+	return nil
+}
+
+func (s *service) Block(ctx context.Context, id string) error {
+	affected, err := s.repo.Block(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return errUserNotFound
+	}
+
+	log.Ctx(ctx).Info().Str("user_id", id).Msg("user blocked")
+
+	return nil
+}
+
+func (s *service) Reactivate(ctx context.Context, id string) error {
+	affected, err := s.repo.Reactivate(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return errUserNotFound
+	}
+
+	log.Ctx(ctx).Info().Str("user_id", id).Msg("user reactivated")
 
 	return nil
 }

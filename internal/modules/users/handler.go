@@ -196,3 +196,75 @@ func (h *Handler) Restore(c *gin.Context) {
 
 	httpx.OK(c, http.StatusOK, nil)
 }
+
+// Block a user godoc
+//
+//	@Summary		Block user
+//	@Description	Block a user by their ULID
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path	string	true	"User ID"
+//	@Success		200	{object}	users.UserResponse
+//	@Failure		400	{object}	httpx.ErrorResponse
+//	@Failure		401	{object}	httpx.ErrorResponse
+//	@Failure		500	{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/users/{id}/block [put]
+func (h *Handler) Block(c *gin.Context) {
+	var params IDParam
+
+	if err := httpx.BindURI(c, &params); err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	if err := h.userService.Block(httpx.ReqCtx(c), params.ID); err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	user, err := h.userService.GetByID(httpx.ReqCtx(c), params.ID)
+	if err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	httpx.OK(c, http.StatusOK, ToUserResponse(user))
+}
+
+// Reactivate a user godoc
+//
+//	@Summary		Reactivate user
+//	@Description	Reactivate a user by their ULID
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path	string	true	"User ID"
+//	@Success		200	{object}	users.UserResponse
+//	@Failure		400	{object}	httpx.ErrorResponse
+//	@Failure		401	{object}	httpx.ErrorResponse
+//	@Failure		500	{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/users/{id}/reactivate [put]
+func (h *Handler) Reactivate(c *gin.Context) {
+	var params IDParam
+
+	if err := httpx.BindURI(c, &params); err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	if err := h.userService.Reactivate(httpx.ReqCtx(c), params.ID); err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	user, err := h.userService.GetByID(httpx.ReqCtx(c), params.ID)
+	if err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	httpx.OK(c, http.StatusOK, ToUserResponse(user))
+}

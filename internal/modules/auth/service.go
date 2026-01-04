@@ -40,7 +40,23 @@ func (s *service) Login(ctx context.Context, email, password string) (*security.
 		return nil, nil, errInvalidCrendentials
 	}
 
-	// 3. create token pair
+	// 3. check if user is blocked
+	if user.Status == security.UserStatusBlocked {
+		return nil, nil, security.ErrBlockedUser
+	}
+
+	// 4. update user status to active on successful login
+	if err = s.userService.Reactivate(ctx, user.ID); err != nil {
+		return nil, nil, err
+	}
+
+	// 5. refresh user data to get updated status
+	user, err = s.userService.GetByID(ctx, user.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 6. create token pair
 	tokens, err := s.securityHandler.GenerateTokenPair(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, errTokenGeneration

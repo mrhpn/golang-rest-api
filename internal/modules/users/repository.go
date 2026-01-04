@@ -8,6 +8,7 @@ import (
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/pagination"
+	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
 // Repository defines the persistence operations for user entities.
@@ -18,6 +19,8 @@ type Repository interface {
 	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, int64, error)
 	Delete(ctx context.Context, id string) (int64, error)
 	Restore(ctx context.Context, id string) (int64, error)
+	Block(ctx context.Context, id string) (int64, error)
+	Reactivate(ctx context.Context, id string) (int64, error)
 }
 
 type repository struct {
@@ -141,6 +144,42 @@ func (r *repository) Restore(ctx context.Context, id string) (int64, error) {
 			apperror.Internal,
 			apperror.ErrDatabaseError.Code,
 			"failed to restore user",
+			result.Error,
+		)
+	}
+
+	return result.RowsAffected, nil
+}
+
+func (r *repository) Block(ctx context.Context, id string) (int64, error) {
+	result := r.db.WithContext(ctx).
+		Model(&User{}).
+		Where("id = ?", id).
+		Update("status", security.UserStatusBlocked)
+
+	if result.Error != nil {
+		return 0, apperror.Wrap(
+			apperror.Internal,
+			apperror.ErrDatabaseError.Code,
+			"failed to block user",
+			result.Error,
+		)
+	}
+
+	return result.RowsAffected, nil
+}
+
+func (r *repository) Reactivate(ctx context.Context, id string) (int64, error) {
+	result := r.db.WithContext(ctx).
+		Model(&User{}).
+		Where("id = ?", id).
+		Update("status", security.UserStatusInactive)
+
+	if result.Error != nil {
+		return 0, apperror.Wrap(
+			apperror.Internal,
+			apperror.ErrDatabaseError.Code,
+			"failed to reactivate user",
 			result.Error,
 		)
 	}
