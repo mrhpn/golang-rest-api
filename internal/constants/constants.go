@@ -69,4 +69,6 @@ const (
 
 	AccessTokenExpirationSecond  = 3600
 	RefreshTokenExpirationSecond = 86400
+
+	JWTSecretMinLength = 32
 )

@@ -163,8 +163,8 @@ func MustLoad() *Config {
 	if cfg.DBURL == "" {
 		panic("env: DATABASE_URL is missing")
 	}
-	if cfg.JWT.Secret == "" {
-		panic("env: JWT_SECRET is missing")
+	if cfg.JWT.Secret == "" || len(cfg.JWT.Secret) < constants.JWTSecretMinLength {
+		panic("env: JWT_SECRET is missing or less than " + strconv.Itoa(constants.JWTSecretMinLength) + " characters")
 	}
 	if cfg.Storage.Host == "" {
 		panic("env: STORAGE_HOST is missing")

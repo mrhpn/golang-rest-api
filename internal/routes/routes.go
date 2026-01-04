@@ -41,12 +41,8 @@ func Register(router *gin.Engine, ctx *app.Context) {
 	userH := users.NewHandler(userS)
 
 	// auth
-	securityH := security.NewJWTHandler(
-		ctx.Cfg.JWT.Secret,
-		ctx.Cfg.JWT.AccessTokenExpirationSecond,
-		ctx.Cfg.JWT.RefreshTokenExpirationSecond,
-	)
-	authS := auth.NewService(userS, securityH)
+	// Use SecurityHandler from context instead of creating a new one
+	authS := auth.NewService(userS, ctx.SecurityHandler)
 	authH := auth.NewHandler(authS, ctx)
 
 	// media
