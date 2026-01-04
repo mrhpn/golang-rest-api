@@ -8,6 +8,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
+	"github.com/mrhpn/go-rest-api/internal/httpx"
+	"github.com/mrhpn/go-rest-api/internal/pagination"
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
@@ -16,6 +18,7 @@ type Service interface {
 	Create(ctx context.Context, req createUserRequest) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, *httpx.PaginationMeta, error)
 	Delete(ctx context.Context, id string) error
 	Restore(ctx context.Context, id string) error
 }
@@ -77,6 +80,15 @@ func (s *service) GetByID(ctx context.Context, id string) (*User, error) {
 
 func (s *service) GetByEmail(ctx context.Context, email string) (*User, error) {
 	return s.repo.FindByEmail(ctx, email)
+}
+
+func (s *service) List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, *httpx.PaginationMeta, error) {
+	users, total, err := s.repo.List(ctx, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return users, pagination.BuildMeta(opts, total), nil
 }
 
 func (s *service) Delete(ctx context.Context, id string) error {

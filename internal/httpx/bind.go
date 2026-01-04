@@ -14,26 +14,7 @@ import (
 // BindJSON binds the request body to the given struct.
 func BindJSON(c *gin.Context, req any) error {
 	if err := c.ShouldBindJSON(req); err != nil {
-		var ve validator.ValidationErrors
-		if errors.As(err, &ve) {
-			fields := make(map[string]string)
-			for _, fe := range ve {
-				fields[stringx.ToSnakeCase(fe.Field())] = validation.GetValidationMessage(fe)
-			}
-
-			return &apperror.AppError{
-				Kind:    apperror.InvalidInput,
-				Code:    "INVALID_REQUEST",
-				Message: "invalid request",
-				Fields:  fields,
-			}
-		}
-
-		return apperror.New(
-			apperror.BadRequest,
-			"BAD_REQUEST",
-			"invalid request",
-		)
+		return handleBindingError(err)
 	}
 	return nil
 }
@@ -48,4 +29,35 @@ func BindURI(c *gin.Context, req any) error {
 		)
 	}
 	return nil
+}
+
+// BindQuery binds the query parameters to the given struct.
+func BindQuery(c *gin.Context, req any) error {
+	if err := c.ShouldBindQuery(req); err != nil {
+		return handleBindingError(err)
+	}
+	return nil
+}
+
+func handleBindingError(err error) error {
+	var ve validator.ValidationErrors
+	if errors.As(err, &ve) {
+		fields := make(map[string]string)
+		for _, fe := range ve {
+			fields[stringx.ToSnakeCase(fe.Field())] = validation.GetValidationMessage(fe)
+		}
+
+		return &apperror.AppError{
+			Kind:    apperror.InvalidInput,
+			Code:    "INVALID_REQUEST",
+			Message: "invalid request",
+			Fields:  fields,
+		}
+	}
+
+	return apperror.New(
+		apperror.BadRequest,
+		"BAD_REQUEST",
+		"failed to parse request",
+	)
 }

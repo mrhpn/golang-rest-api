@@ -14,7 +14,8 @@ type createUserRequest struct {
 
 // UserResponse returns necessary data about a user
 type UserResponse struct {
-	ID    string        `json:"id"`
-	Email string        `json:"email"`
-	Role  security.Role `json:"role"`
+	ID        string        `json:"id"`
+	Email     string        `json:"email"`
+	Role      security.Role `json:"role"`
+	CreatedAt string        `json:"created_at"`
 }

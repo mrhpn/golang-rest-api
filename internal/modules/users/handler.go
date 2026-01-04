@@ -2,10 +2,12 @@ package users
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/mrhpn/go-rest-api/internal/httpx"
+	"github.com/mrhpn/go-rest-api/internal/pagination"
 )
 
 // Handler handles user-related HTTP endpoints such as user profile access and account management operations.
@@ -84,6 +86,66 @@ func (h *Handler) Get(c *gin.Context) {
 		c,
 		http.StatusOK,
 		UserResponse{ID: user.ID, Email: user.Email, Role: user.Role},
+	)
+}
+
+// List users godoc
+//
+//	@Summary		List users
+//	@Description	Get a paginated list of users with search and sorting
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Param			page			query		int		false	"Page number (default: 1)"					default(1)	minimum(1)
+//	@Param			limit			query		int		false	"Items per page (default: 10, max: 100)"		default(10)	minimum(1)
+//	@Param			search			query		string	false	"Search text (case-insensitive)"
+//	@Param			search_columns	query		[]string	false	"Columns to search in (default: all searchable)"
+//	@Param			sort_by			query		string	false	"Field to sort by (email, role, created_at)"
+//	@Param			order			query		string	false	"Sort order (asc or desc)"					Enums(asc, desc)	default(desc)
+//	@Param			exact_match		query		bool	false	"Use exact match for search (default: false)"
+//	@Success		200				{object}	httpx.SuccessResponse{data=[]users.UserResponse,meta=httpx.PaginationMeta}
+//	@Failure		400				{object}	httpx.ErrorResponse
+//	@Failure		401				{object}	httpx.ErrorResponse
+//	@Failure		500				{object}	httpx.ErrorResponse
+//	@Security		BearerAuth
+//	@Router			/users [get]
+func (h *Handler) List(c *gin.Context) {
+	var query pagination.QueryList
+	if err := httpx.BindQuery(c, &query); err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	opts := pagination.NewQueryOptions(
+		&query,
+		pagination.SortSearchPolicy{
+			SortableCols:   []string{"role", "created_at", "updated_at"},
+			SearchableCols: []string{"email"},
+		},
+	)
+
+	users, meta, err := h.userService.List(httpx.ReqCtx(c), opts)
+	if err != nil {
+		httpx.FailWithError(c, err)
+		return
+	}
+
+	// Convert to response format
+	userResponses := make([]UserResponse, len(users))
+	for i, user := range users {
+		userResponses[i] = UserResponse{
+			ID:        user.ID,
+			Email:     user.Email,
+			Role:      user.Role,
+			CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		}
+	}
+
+	httpx.OKWithMeta(
+		c,
+		http.StatusOK,
+		userResponses,
+		meta,
 	)
 }
 

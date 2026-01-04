@@ -6,6 +6,13 @@ const (
 	GB = 1024 * MB
 )
 
+// Pagination constants
+const (
+	PaginationDefaultLimit = 10  // Default items per page
+	PaginationMaxLimit     = 100 // Maximum items per page
+	PaginationDefaultPage  = 1   // Default page number
+)
+
 const (
 	APIPrefix         = "api"
 	CurrentAPIVersion = "v1"

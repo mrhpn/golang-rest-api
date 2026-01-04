@@ -1,6 +1,8 @@
 package auth
 
-import "github.com/mrhpn/go-rest-api/internal/modules/users"
+import (
+	"github.com/mrhpn/go-rest-api/internal/security"
+)
 
 // LoginRequest constructs login request structure.
 type LoginRequest struct {
@@ -10,8 +12,14 @@ type LoginRequest struct {
 
 // LoginResponse constructs login response structure. This will not include RefreshToken since it is sent via http-only cookie for security.
 type LoginResponse struct {
-	AccessToken string             `json:"access_token"`
-	User        users.UserResponse `json:"user"`
+	AccessToken string            `json:"access_token"`
+	User        LoginUserResponse `json:"user"`
+}
+
+type LoginUserResponse struct {
+	ID    string        `json:"id"`
+	Email string        `json:"email"`
+	Role  security.Role `json:"role"`
 }
 
 // RefreshTokenResponse constructs refresh token response structure.

@@ -7,6 +7,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// PaginationMeta contains pagination metadata for list responses
+type PaginationMeta struct {
+	Page       int  `json:"page"`
+	Limit      int  `json:"limit"`
+	Total      int  `json:"total"`
+	TotalPages int  `json:"total_pages"`
+	HasNext    bool `json:"has_next"`
+	HasPrev    bool `json:"has_prev"`
+}
+
 // SuccessResponse defines the standard structure for successful API responses
 type SuccessResponse struct {
 	Success bool `json:"success" example:"true"`

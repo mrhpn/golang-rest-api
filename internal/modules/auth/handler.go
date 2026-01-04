@@ -7,7 +7,6 @@ import (
 
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
-	"github.com/mrhpn/go-rest-api/internal/modules/users"
 )
 
 const refreshTokenCookieName = "refresh_token"
@@ -68,7 +67,7 @@ func (h *Handler) Login(c *gin.Context) {
 
 	httpx.OK(c, http.StatusOK, LoginResponse{
 		AccessToken: tokenPair.AccessToken,
-		User: users.UserResponse{
+		User: LoginUserResponse{
 			ID:    user.ID,
 			Email: user.Email,
 			Role:  user.Role,

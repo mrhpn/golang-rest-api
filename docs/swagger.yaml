@@ -15,7 +15,16 @@ definitions:
       access_token:
         type: string
       user:
-        $ref: '#/definitions/users.UserResponse'
+        $ref: '#/definitions/auth.LoginUserResponse'
+    type: object
+  auth.LoginUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/security.Role'
     type: object
   auth.RefreshTokenResponse:
     properties:
@@ -50,6 +59,21 @@ definitions:
         example: false
         type: boolean
     type: object
+  httpx.PaginationMeta:
+    properties:
+      has_next:
+        type: boolean
+      has_prev:
+        type: boolean
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
   httpx.SuccessResponse:
     properties:
       data: {}
@@ -72,6 +96,8 @@ definitions:
     - RoleUser
   users.UserResponse:
     properties:
+      created_at:
+        type: string
       email:
         type: string
       id:
@@ -256,6 +282,83 @@ paths:
       tags:
       - Media
   /users:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of users with search and sorting
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: 'Items per page (default: 10, max: 100)'
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Search text (case-insensitive)
+        in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        description: 'Columns to search in (default: all searchable)'
+        in: query
+        items:
+          type: string
+        name: search_columns
+        type: array
+      - description: Field to sort by (email, role, created_at)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc or desc)
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      - description: 'Use exact match for search (default: false)'
+        in: query
+        name: exact_match
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/users.UserResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/httpx.PaginationMeta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - User
     post:
       consumes:
       - application/json

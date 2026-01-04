@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
+	"github.com/mrhpn/go-rest-api/internal/pagination"
 )
 
 // Repository defines the persistence operations for user entities.
@@ -14,6 +15,7 @@ type Repository interface {
 	Create(ctx context.Context, user *User) error
 	FindByID(ctx context.Context, id string) (*User, error)
 	FindByEmail(ctx context.Context, email string) (*User, error)
+	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, int64, error)
 	Delete(ctx context.Context, id string) (int64, error)
 	Restore(ctx context.Context, id string) (int64, error)
 }
@@ -79,6 +81,39 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*User, erro
 	}
 
 	return &user, nil
+}
+
+func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, int64, error) {
+	var users []*User
+	var total int64
+
+	// 1. Get total count using the SearchScope
+	err := r.db.WithContext(ctx).Model(&User{}).
+		Scopes(pagination.SearchScope(opts)).
+		Count(&total).Error
+	if err != nil {
+		return nil, 0, apperror.Wrap(
+			apperror.Internal,
+			apperror.ErrDatabaseError.Code,
+			"failed to count users",
+			err,
+		)
+	}
+
+	// 2. Fetch data using the Paginate Scope
+	err = r.db.WithContext(ctx).
+		Scopes(pagination.Paginate(opts)).
+		Find(&users).Error
+	if err != nil {
+		return nil, 0, apperror.Wrap(
+			apperror.Internal,
+			apperror.ErrDatabaseError.Code,
+			"failed to build query",
+			err,
+		)
+	}
+
+	return users, total, nil
 }
 
 func (r *repository) Delete(ctx context.Context, id string) (int64, error) {

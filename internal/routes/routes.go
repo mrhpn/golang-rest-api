@@ -78,6 +78,7 @@ func Register(router *gin.Engine, ctx *app.Context) {
 	usersGroup := api.Group("/users")
 	usersGroup.Use(mw.RequireAuth(ctx))
 	{
+		usersGroup.GET("", userH.List)
 		usersGroup.GET("/:id", userH.Get)
 		usersGroup.POST("", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Create)
 		usersGroup.DELETE("/:id", mw.AllowRoles(security.RoleSuperAdmin, security.RoleAdmin), userH.Delete)
