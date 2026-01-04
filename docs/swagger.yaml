@@ -31,7 +31,7 @@ definitions:
       access_token:
         type: string
     type: object
-  health.healthResponse:
+  health.HealthResponse:
     properties:
       checks:
         additionalProperties:
@@ -82,6 +82,11 @@ definitions:
         example: true
         type: boolean
     type: object
+  media.MediaResponse:
+    properties:
+      url:
+        type: string
+    type: object
   security.Role:
     enum:
     - superadmin
@@ -94,18 +99,7 @@ definitions:
     - RoleAdmin
     - RoleEmployee
     - RoleUser
-  users.UserResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      role:
-        $ref: '#/definitions/security.Role'
-    type: object
-  users.createUserRequest:
+  users.CreateUserRequest:
     properties:
       email:
         type: string
@@ -123,6 +117,17 @@ definitions:
     - email
     - password
     - role
+    type: object
+  users.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      role:
+        $ref: '#/definitions/security.Role'
     type: object
 externalDocs:
   description: OpenAPI
@@ -213,7 +218,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.healthResponse'
+            $ref: '#/definitions/health.HealthResponse'
       summary: Check health
       tags:
       - Health
@@ -226,7 +231,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.healthResponse'
+            $ref: '#/definitions/health.HealthResponse'
       summary: Check liveness
       tags:
       - Health
@@ -239,11 +244,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.healthResponse'
+            $ref: '#/definitions/health.HealthResponse'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/health.healthResponse'
+            $ref: '#/definitions/health.HealthResponse'
       summary: Check readiness
       tags:
       - Health
@@ -268,9 +273,7 @@ paths:
             - $ref: '#/definitions/httpx.SuccessResponse'
             - properties:
                 data:
-                  additionalProperties:
-                    type: string
-                  type: object
+                  $ref: '#/definitions/media.MediaResponse'
               type: object
         "400":
           description: Bad Request
@@ -369,7 +372,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/users.createUserRequest'
+          $ref: '#/definitions/users.CreateUserRequest'
       produces:
       - application/json
       responses:

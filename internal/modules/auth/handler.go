@@ -32,8 +32,8 @@ func NewHandler(authService Service, ctx *app.Context) *Handler {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		LoginRequest	true	"Login Credentials"
-//	@Success		200		{object}	LoginResponse
+//	@Param			request	body		auth.LoginRequest	true	"Login Credentials"
+//	@Success		200		{object}	auth.LoginResponse
 //	@Failure		400		{object}	httpx.ErrorResponse
 //	@Failure		401		{object}	httpx.ErrorResponse
 //	@Failure		500		{object}	httpx.ErrorResponse
@@ -65,13 +65,7 @@ func (h *Handler) Login(c *gin.Context) {
 		true,                              // httpOnly
 	)
 
-	httpx.OK(c, http.StatusOK, LoginResponse{
-		AccessToken: tokenPair.AccessToken,
-		User: LoginUserResponse{
-			ID:    user.ID,
-			Email: user.Email,
-			Role:  user.Role,
-		}})
+	httpx.OK(c, http.StatusOK, ToLoginResponse(tokenPair.AccessToken, user))
 }
 
 // Refresh token godoc
@@ -81,7 +75,7 @@ func (h *Handler) Login(c *gin.Context) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	RefreshTokenResponse
+//	@Success		200	{object}	auth.RefreshTokenResponse
 //	@Failure		400	{object}	httpx.ErrorResponse
 //	@Failure		401	{object}	httpx.ErrorResponse
 //	@Failure		500	{object}	httpx.ErrorResponse
@@ -108,7 +102,5 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	httpx.OK(c, http.StatusOK, RefreshTokenResponse{
-		AccessToken: newAccessToken,
-	})
+	httpx.OK(c, http.StatusOK, ToRefreshTokenResponse(newAccessToken))
 }

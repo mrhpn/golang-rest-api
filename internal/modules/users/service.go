@@ -15,7 +15,7 @@ import (
 
 // Service defines the business logic for managing users.
 type Service interface {
-	Create(ctx context.Context, req createUserRequest) (*User, error)
+	Create(ctx context.Context, req CreateUserRequest) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, *httpx.PaginationMeta, error)
@@ -32,7 +32,7 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) Create(ctx context.Context, req createUserRequest) (*User, error) {
+func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, error) {
 	// check email uniqueness
 	_, err := s.repo.FindByEmail(ctx, req.Email)
 	if err == nil {

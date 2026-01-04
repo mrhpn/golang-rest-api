@@ -125,7 +125,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     }
                 }
@@ -145,7 +145,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     }
                 }
@@ -165,13 +165,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     }
                 }
@@ -216,10 +216,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "string"
-                                            }
+                                            "$ref": "#/definitions/media.MediaResponse"
                                         }
                                     }
                                 }
@@ -379,7 +376,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.createUserRequest"
+                            "$ref": "#/definitions/users.CreateUserRequest"
                         }
                     }
                 ],
@@ -618,7 +615,7 @@
                 }
             }
         },
-        "health.healthResponse": {
+        "health.HealthResponse": {
             "type": "object",
             "properties": {
                 "checks": {
@@ -695,6 +692,14 @@
                 }
             }
         },
+        "media.MediaResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "security.Role": {
             "type": "string",
             "enum": [
@@ -710,24 +715,7 @@
                 "RoleUser"
             ]
         },
-        "users.UserResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/security.Role"
-                }
-            }
-        },
-        "users.createUserRequest": {
+        "users.CreateUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -753,6 +741,23 @@
                             "$ref": "#/definitions/security.Role"
                         }
                     ]
+                }
+            }
+        },
+        "users.UserResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/security.Role"
                 }
             }
         }

@@ -2,7 +2,6 @@ package users
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -27,7 +26,7 @@ func NewHandler(userService Service) *Handler {
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		createUserRequest	true	"CreateUserRequest"
+//	@Param			request	body		users.CreateUserRequest	true	"CreateUserRequest"
 //	@Success		201		{object}	users.UserResponse
 //	@Failure		400		{object}	httpx.ErrorResponse
 //	@Failure		401		{object}	httpx.ErrorResponse
@@ -35,7 +34,7 @@ func NewHandler(userService Service) *Handler {
 //	@Security		BearerAuth
 //	@Router			/users [post]
 func (h *Handler) Create(c *gin.Context) {
-	var req createUserRequest
+	var req CreateUserRequest
 	if err := httpx.BindJSON(c, &req); err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -50,7 +49,7 @@ func (h *Handler) Create(c *gin.Context) {
 	httpx.OK(
 		c,
 		http.StatusCreated,
-		UserResponse{ID: user.ID, Email: user.Email, Role: user.Role},
+		ToUserResponse(user),
 	)
 }
 
@@ -69,7 +68,7 @@ func (h *Handler) Create(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{id} [get]
 func (h *Handler) Get(c *gin.Context) {
-	var params iDParam
+	var params IDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
@@ -85,7 +84,7 @@ func (h *Handler) Get(c *gin.Context) {
 	httpx.OK(
 		c,
 		http.StatusOK,
-		UserResponse{ID: user.ID, Email: user.Email, Role: user.Role},
+		ToUserResponse(user),
 	)
 }
 
@@ -130,21 +129,10 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
-	// Convert to response format
-	userResponses := make([]UserResponse, len(users))
-	for i, user := range users {
-		userResponses[i] = UserResponse{
-			ID:        user.ID,
-			Email:     user.Email,
-			Role:      user.Role,
-			CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		}
-	}
-
 	httpx.OKWithMeta(
 		c,
 		http.StatusOK,
-		userResponses,
+		ToUserResponseList(users),
 		meta,
 	)
 }
@@ -164,7 +152,7 @@ func (h *Handler) List(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
-	var params iDParam
+	var params IDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
@@ -194,7 +182,7 @@ func (h *Handler) Delete(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Router			/users/{id}/restore [put]
 func (h *Handler) Restore(c *gin.Context) {
-	var params iDParam
+	var params IDParam
 
 	if err := httpx.BindURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)

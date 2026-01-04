@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
@@ -25,4 +26,28 @@ type LoginUserResponse struct {
 // RefreshTokenResponse constructs refresh token response structure.
 type RefreshTokenResponse struct {
 	AccessToken string `json:"access_token"`
+}
+
+// ToLoginUserResponse converts a User model to LoginUserResponse DTO
+func ToLoginUserResponse(user *users.User) LoginUserResponse {
+	return LoginUserResponse{
+		ID:    user.ID,
+		Email: user.Email,
+		Role:  user.Role,
+	}
+}
+
+// ToLoginResponse converts access token and user to LoginResponse DTO
+func ToLoginResponse(accessToken string, user *users.User) LoginResponse {
+	return LoginResponse{
+		AccessToken: accessToken,
+		User:        ToLoginUserResponse(user),
+	}
+}
+
+// ToRefreshTokenResponse converts access token to RefreshTokenResponse DTO
+func ToRefreshTokenResponse(newAccessToken string) RefreshTokenResponse {
+	return RefreshTokenResponse{
+		AccessToken: newAccessToken,
+	}
 }

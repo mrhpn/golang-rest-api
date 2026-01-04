@@ -1,4 +1,4 @@
-.PHONY: run dev build migrate-up migrate-down migrate-status lint lint-fix test vet fmt tidy
+.PHONY: run dev build docs migrate-up migrate-down migrate-status lint lint-fix test vet fmt tidy
 
 run:
 	go run ./cmd/api
@@ -8,6 +8,9 @@ dev:
 
 build:
 	go build -o bin/api ./cmd/api
+
+docs:
+	swag init -g cmd/api/main.go
 
 DB_URL ?= postgres://postgres:postgres@localhost:5432/go_rest_api_db?sslmode=disable
 

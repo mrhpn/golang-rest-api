@@ -24,26 +24,16 @@ func NewHandler(appCtx *app.Context) *Handler {
 	return &Handler{appCtx: appCtx}
 }
 
-// healthResponse represents the health check response
-type healthResponse struct {
-	Status    string            `json:"status"`
-	Timestamp string            `json:"timestamp"`
-	Checks    map[string]string `json:"checks,omitempty"`
-}
-
 // Check health godoc
 //
 //	@Summary		Check health
 //	@Description	Check health status of server (liveness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	healthResponse
+//	@Success		200	{object}	health.HealthResponse
 //	@Router			/health [get]
 func (h *Handler) Check(c *gin.Context) {
-	httpx.OK(c, http.StatusOK, healthResponse{
-		Status:    "healthy",
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	})
+	httpx.OK(c, http.StatusOK, ToResponse("healthy"))
 }
 
 // Readiness checks if the service is ready to accept traffic
@@ -52,8 +42,8 @@ func (h *Handler) Check(c *gin.Context) {
 //	@Description	Check if service is ready to accept traffic (readiness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	healthResponse
-//	@Failure		503	{object}	healthResponse
+//	@Success		200	{object}	health.HealthResponse
+//	@Failure		503	{object}	health.HealthResponse
 //	@Router			/health/ready [get]
 func (h *Handler) Readiness(c *gin.Context) {
 	checks := make(map[string]string)
@@ -84,11 +74,7 @@ func (h *Handler) Readiness(c *gin.Context) {
 		httpStatus = http.StatusServiceUnavailable
 	}
 
-	httpx.OK(c, httpStatus, healthResponse{
-		Status:    status,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-		Checks:    checks,
-	})
+	httpx.OK(c, httpStatus, ToResponse(status, checks))
 }
 
 // Liveness checks if the service is alive
@@ -97,11 +83,8 @@ func (h *Handler) Readiness(c *gin.Context) {
 //	@Description	Check if service is alive (liveness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	healthResponse
+//	@Success		200	{object}	health.HealthResponse
 //	@Router			/health/live [get]
 func (h *Handler) Liveness(c *gin.Context) {
-	httpx.OK(c, http.StatusOK, healthResponse{
-		Status:    "alive",
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	})
+	httpx.OK(c, http.StatusOK, ToResponse("alive"))
 }

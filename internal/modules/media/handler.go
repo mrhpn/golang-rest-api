@@ -77,7 +77,7 @@ func NewHandler(mediaService Service) *Handler {
 //	@Accept			multipart/form-data
 //	@Produce		json
 //	@Param			file	formData	file	true	"Image file (jpg, jpeg, png)"
-//	@Success		201		{object}	httpx.SuccessResponse{data=map[string]string}
+//	@Success		201		{object}	httpx.SuccessResponse{data=media.MediaResponse}
 //	@Failure		400		{object}	httpx.ErrorResponse
 //	@Security		BearerAuth
 //	@Router			/media/upload/profile [post]
@@ -126,5 +126,5 @@ func (h *Handler) handleUpload(c *gin.Context, subDir fileCategory, category fil
 		return
 	}
 
-	httpx.OK(c, http.StatusCreated, gin.H{"url": url})
+	httpx.OK(c, http.StatusCreated, ToResponse(url))
 }

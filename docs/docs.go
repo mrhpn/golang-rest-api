@@ -131,7 +131,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     }
                 }
@@ -151,7 +151,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     }
                 }
@@ -171,13 +171,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/health.healthResponse"
+                            "$ref": "#/definitions/health.HealthResponse"
                         }
                     }
                 }
@@ -222,10 +222,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "string"
-                                            }
+                                            "$ref": "#/definitions/media.MediaResponse"
                                         }
                                     }
                                 }
@@ -385,7 +382,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.createUserRequest"
+                            "$ref": "#/definitions/users.CreateUserRequest"
                         }
                     }
                 ],
@@ -624,7 +621,7 @@ const docTemplate = `{
                 }
             }
         },
-        "health.healthResponse": {
+        "health.HealthResponse": {
             "type": "object",
             "properties": {
                 "checks": {
@@ -701,6 +698,14 @@ const docTemplate = `{
                 }
             }
         },
+        "media.MediaResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "security.Role": {
             "type": "string",
             "enum": [
@@ -716,24 +721,7 @@ const docTemplate = `{
                 "RoleUser"
             ]
         },
-        "users.UserResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "role": {
-                    "$ref": "#/definitions/security.Role"
-                }
-            }
-        },
-        "users.createUserRequest": {
+        "users.CreateUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -759,6 +747,23 @@ const docTemplate = `{
                             "$ref": "#/definitions/security.Role"
                         }
                     ]
+                }
+            }
+        },
+        "users.UserResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/security.Role"
                 }
             }
         }
