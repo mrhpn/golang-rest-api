@@ -15,6 +15,7 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_deleted_at ON users(deleted_at);
+CREATE INDEX idx_users_role ON users(role) WHERE deleted_at IS NULL;
 -- +goose StatementEnd
 
 -- +goose Down
