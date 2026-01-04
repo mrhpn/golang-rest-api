@@ -279,18 +279,27 @@ func NewJWTHandler(secret string, accessTokenExpirySecond, refreshTokenExpirySec
 }
 ```
 
-### 14. **Missing Input Sanitization**
+### 14. **Missing Input Sanitization** ✅ FIXED
 
 **File:** `internal/pagination/pagination.go:136` **Issue:** Search input should
 be sanitized to prevent injection. **Fix:** Add input sanitization:
 
 ```go
-// Sanitize search input
-search := strings.TrimSpace(opts.Search)
-// Remove potentially dangerous characters
-search = strings.ReplaceAll(search, "%", "\\%")
-search = strings.ReplaceAll(search, "_", "\\_")
+// sanitizeSearchInput sanitizes search input to prevent LIKE wildcard injection
+// It escapes special characters % and _ which are wildcards in SQL LIKE patterns
+func sanitizeSearchInput(search string) string {
+	// Trim whitespace
+	search = strings.TrimSpace(search)
+	// Escape SQL LIKE wildcard characters to prevent unintended pattern matching
+	search = strings.ReplaceAll(search, "%", "\\%")
+	search = strings.ReplaceAll(search, "_", "\\_")
+	return search
+}
 ```
+
+**Status:** ✅ Implemented in `applySearch` function. Search input is now
+sanitized before being used in ILIKE queries to prevent wildcard injection
+attacks.
 
 ### 15. **File Upload Size Check Before Processing**
 

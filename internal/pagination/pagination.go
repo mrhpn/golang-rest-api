@@ -105,6 +105,19 @@ func SearchScope(opts *QueryOptions) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
+// sanitizeSearchInput sanitizes search input to prevent LIKE wildcard injection
+// It escapes special characters % and _ which are wildcards in SQL LIKE patterns
+func sanitizeSearchInput(search string) string {
+	// Trim whitespace
+	search = strings.TrimSpace(search)
+	// Escape SQL LIKE wildcard characters to prevent unintended pattern matching
+	// % matches any sequence of characters
+	// _ matches any single character
+	search = strings.ReplaceAll(search, "%", "\\%")
+	search = strings.ReplaceAll(search, "_", "\\_")
+	return search
+}
+
 // applySearch applies search conditions to the query
 func applySearch(db *gorm.DB, opts *QueryOptions) *gorm.DB {
 	if opts.Search == "" {
@@ -119,16 +132,18 @@ func applySearch(db *gorm.DB, opts *QueryOptions) *gorm.DB {
 		return db
 	}
 
+	sanitizedSearch := sanitizeSearchInput(opts.Search)
+
 	var conditions []string
 	var args []any
 	for _, col := range cols {
 		columnName := stringx.ToSnakeCase(col)
 		if opts.ExactMatch {
 			conditions = append(conditions, columnName+" = ? ")
-			args = append(args, opts.Search)
+			args = append(args, sanitizedSearch)
 		} else {
 			conditions = append(conditions, columnName+" ILIKE ?")
-			args = append(args, "%"+opts.Search+"%")
+			args = append(args, "%"+sanitizedSearch+"%")
 		}
 	}
 	return db.Where(strings.Join(conditions, " OR "), args...)
