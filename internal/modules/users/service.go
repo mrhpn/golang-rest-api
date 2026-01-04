@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/bcrypt"
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
@@ -45,19 +44,21 @@ func (s *service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 	}
 
 	// hash password
-	hash, err := bcrypt.GenerateFromPassword(
-		[]byte(req.Password),
-		bcrypt.DefaultCost,
-	)
+	hash, err := security.HashPassword(req.Password)
 	if err != nil {
-		return nil, apperror.ErrInternal
+		return nil, apperror.Wrap(
+			apperror.Internal,
+			apperror.ErrInternal.Code,
+			"failed to hash password",
+			err,
+		)
 	}
 
 	// create user
 	user := &User{
 		Email:        req.Email,
 		Role:         req.Role,
-		PasswordHash: string(hash),
+		PasswordHash: hash,
 	}
 
 	if user.Role == "" {
