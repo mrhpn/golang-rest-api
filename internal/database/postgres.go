@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -168,6 +169,11 @@ func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 	// Register callback to automatically apply query timeout to all queries
 	registerQueryTimeoutCallback(db, dbCfg)
 
+	// Start periodic connection pool metrics logging
+	if dbCfg.DBPoolMetricsEnabled {
+		startConnectionPoolMetrics(sqlDB)
+	}
+
 	return db, nil
 }
 
@@ -210,4 +216,23 @@ func registerQueryTimeoutCallback(db *gorm.DB, dbCfg *config.DBConfig) {
 	if err := db.Callback().Delete().Before("gorm:delete").Register("apply_query_timeout", applyTimeout); err != nil {
 		log.Error().Err(err).Msg("failed to register gorm delete timeout callback")
 	}
+}
+
+// startConnectionPoolMetrics starts a goroutine that periodically logs database
+// connection pool statistics for monitoring and debugging purposes.
+func startConnectionPoolMetrics(sqlDB *sql.DB) {
+	go func() {
+		ticker := time.NewTicker(time.Duration(constants.DBPoolMetricsLogIntervalSecond) * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			stats := sqlDB.Stats()
+			log.Info().
+				Int("open_connections", stats.OpenConnections).
+				Int("in_use", stats.InUse).
+				Int("idle", stats.Idle).
+				Int64("wait_count", stats.WaitCount).
+				Dur("wait_duration", stats.WaitDuration).
+				Msg("database connection pool stats")
+		}
+	}()
 }

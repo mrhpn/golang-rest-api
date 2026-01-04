@@ -40,13 +40,15 @@ type RateLimitConfig struct {
 
 // DBConfig represents database related config
 type DBConfig struct {
-	MaxOpenConns          int // maximum open connections
-	MaxIdleConns          int // maximum idle connections
-	ConnMaxLifetimeMinute int // connection max lifetime in minutes
-	ConnMaxIdleTimeMinute int // connection max idle time in minutes
-	QueryTimeoutSecond    int // query timeout in seconds
-	RetryAttempts         int // number of retry attempts
-	RetryDelaySecond      int // retry delay in seconds
+	MaxOpenConns                   int  // maximum open connections
+	MaxIdleConns                   int  // maximum idle connections
+	ConnMaxLifetimeMinute          int  // connection max lifetime in minutes
+	ConnMaxIdleTimeMinute          int  // connection max idle time in minutes
+	QueryTimeoutSecond             int  // query timeout in seconds
+	RetryAttempts                  int  // number of retry attempts
+	RetryDelaySecond               int  // retry delay in seconds
+	DBPoolMetricsEnabled           bool // db pool metrics log enabled or not
+	DBPoolMetricsLogIntervalSecond int  // db pool metrics log interval second
 }
 
 // RedisConfig represents redis related config
@@ -113,13 +115,15 @@ func MustLoad() *Config {
 		},
 
 		DB: DBConfig{
-			MaxOpenConns:          getEnvAsInt("DB_MAX_OPEN_CONNS", constants.DBMaxOpenConns),
-			MaxIdleConns:          getEnvAsInt("DB_MAX_IDLE_CONNS", constants.DBMaxIdleConns),
-			ConnMaxLifetimeMinute: getEnvAsInt("DB_CONN_MAX_LIFETIME_MINUTE", constants.DBMaxLifetimeMinute),
-			ConnMaxIdleTimeMinute: getEnvAsInt("DB_CONN_MAX_IDLE_TIME_MINUTE", constants.DBConnMaxIdleTimeMinute),
-			QueryTimeoutSecond:    getEnvAsInt("DB_QUERY_TIMEOUT_SECOND", constants.DBMaxQueryTimeoutSecond),
-			RetryAttempts:         getEnvAsInt("DB_RETRY_ATTEMPTS", constants.DBMaxRetryAttempts),
-			RetryDelaySecond:      getEnvAsInt("DB_RETRY_DELAY_SECOND", constants.DBRetryDelaySecond),
+			MaxOpenConns:                   getEnvAsInt("DB_MAX_OPEN_CONNS", constants.DBMaxOpenConns),
+			MaxIdleConns:                   getEnvAsInt("DB_MAX_IDLE_CONNS", constants.DBMaxIdleConns),
+			ConnMaxLifetimeMinute:          getEnvAsInt("DB_CONN_MAX_LIFETIME_MINUTE", constants.DBMaxLifetimeMinute),
+			ConnMaxIdleTimeMinute:          getEnvAsInt("DB_CONN_MAX_IDLE_TIME_MINUTE", constants.DBConnMaxIdleTimeMinute),
+			QueryTimeoutSecond:             getEnvAsInt("DB_QUERY_TIMEOUT_SECOND", constants.DBMaxQueryTimeoutSecond),
+			RetryAttempts:                  getEnvAsInt("DB_RETRY_ATTEMPTS", constants.DBMaxRetryAttempts),
+			RetryDelaySecond:               getEnvAsInt("DB_RETRY_DELAY_SECOND", constants.DBRetryDelaySecond),
+			DBPoolMetricsEnabled:           getEnvAsBool("DB_POOL_METRICS_ENABLED", constants.DBPoolMetricsEnabled),
+			DBPoolMetricsLogIntervalSecond: getEnvAsInt("DB_POOL_METRICS_INTERVAL_SECOND", constants.DBPoolMetricsLogIntervalSecond),
 		},
 
 		Redis: RedisConfig{

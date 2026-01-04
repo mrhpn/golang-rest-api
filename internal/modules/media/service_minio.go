@@ -74,9 +74,7 @@ func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool)
 }
 
 // Upload streams the file to MinIO and returns the path
-func (s *minioService) Upload(file *multipart.FileHeader, subDir fileCategory) (string, error) {
-	ctx := context.Background()
-
+func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, subDir fileCategory) (string, error) {
 	src, err := file.Open() // 80
 	if err != nil {
 		return "", apperror.Wrap(

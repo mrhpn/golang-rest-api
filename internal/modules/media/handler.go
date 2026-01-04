@@ -120,7 +120,7 @@ func (h *Handler) handleUpload(c *gin.Context, subDir fileCategory, category fil
 	}
 
 	// 6. upload
-	url, err := h.mediaService.Upload(file, subDir)
+	url, err := h.mediaService.Upload(httpx.ReqCtx(c), file, subDir)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return

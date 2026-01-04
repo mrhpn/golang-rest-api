@@ -50,13 +50,15 @@ const (
 	MaxMultipartMemoryMB = 8
 	MaxMultipartMemory   = MaxMultipartMemoryMB * MB
 
-	DBMaxQueryTimeoutSecond = 30
-	DBMaxRetryAttempts      = 3
-	DBRetryDelaySecond      = 2
-	DBMaxOpenConns          = 25
-	DBMaxIdleConns          = 10
-	DBMaxLifetimeMinute     = 60
-	DBConnMaxIdleTimeMinute = 30
+	DBMaxQueryTimeoutSecond        = 30
+	DBMaxRetryAttempts             = 3
+	DBRetryDelaySecond             = 2
+	DBMaxOpenConns                 = 25
+	DBMaxIdleConns                 = 10
+	DBMaxLifetimeMinute            = 60
+	DBConnMaxIdleTimeMinute        = 30
+	DBPoolMetricsEnabled           = true
+	DBPoolMetricsLogIntervalSecond = 30
 
 	LogMaxDay    = 30
 	LogMaxBackup = 8

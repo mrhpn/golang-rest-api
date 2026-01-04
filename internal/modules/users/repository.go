@@ -104,6 +104,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 	}
 
 	// 2. Fetch data using the Paginate Scope
+	// If we add relationships later, don't forget to use Preload here
 	err = r.db.WithContext(ctx).
 		Scopes(pagination.Paginate(opts)).
 		Find(&users).Error
