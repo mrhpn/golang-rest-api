@@ -16,6 +16,24 @@ func Transaction(ctx context.Context, db *gorm.DB, fn func(*gorm.DB) error) erro
 		return tx.Error
 	}
 
+	// channel to monitor context cancellation
+	done := make(chan struct{})
+	defer close(done)
+
+	// goroutine to monitor context cancellation and rollback transaction if needed
+	go func() {
+		select {
+		case <-ctx.Done():
+			if rollbackErr := tx.Rollback().Error; rollbackErr != nil {
+				log.Ctx(ctx).
+					Error().
+					Err(rollbackErr).
+					Msg("failed to rollback transaction on context cancellation")
+			}
+		case <-done:
+		}
+	}()
+
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()

@@ -30,7 +30,7 @@ func NewHandler(appCtx *app.Context) *Handler {
 //	@Description	Check health status of server (liveness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	health.HealthResponse
+//	@Success		200	{object}	health.Response
 //	@Router			/health [get]
 func (h *Handler) Check(c *gin.Context) {
 	httpx.OK(c, http.StatusOK, ToResponse("healthy"))
@@ -42,8 +42,8 @@ func (h *Handler) Check(c *gin.Context) {
 //	@Description	Check if service is ready to accept traffic (readiness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	health.HealthResponse
-//	@Failure		503	{object}	health.HealthResponse
+//	@Success		200	{object}	health.Response
+//	@Failure		503	{object}	health.Response
 //	@Router			/health/ready [get]
 func (h *Handler) Readiness(c *gin.Context) {
 	checks := make(map[string]string)
@@ -83,7 +83,7 @@ func (h *Handler) Readiness(c *gin.Context) {
 //	@Description	Check if service is alive (liveness probe)
 //	@Tags			Health
 //	@Produce		json
-//	@Success		200	{object}	health.HealthResponse
+//	@Success		200	{object}	health.Response
 //	@Router			/health/live [get]
 func (h *Handler) Liveness(c *gin.Context) {
 	httpx.OK(c, http.StatusOK, ToResponse("alive"))
