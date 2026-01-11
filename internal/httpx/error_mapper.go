@@ -36,8 +36,8 @@ func mapError(err error) mappedError {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return mappedError{
 			Status:  http.StatusNotFound,
-			Code:    "NOT_FOUND",
-			Message: "resource not found",
+			Code:    apperror.ErrNotFound.Code,
+			Message: apperror.ErrNotFound.Message,
 		}
 	}
 
@@ -45,8 +45,8 @@ func mapError(err error) mappedError {
 	// This should rarely happen if all errors are properly wrapped
 	return mappedError{
 		Status:  http.StatusInternalServerError,
-		Code:    "INTERNAL_ERROR",
-		Message: "internal server error",
+		Code:    apperror.ErrInternal.Code,
+		Message: apperror.ErrInternal.Message,
 	}
 }
 

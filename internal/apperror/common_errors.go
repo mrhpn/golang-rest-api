@@ -22,9 +22,17 @@ var (
 		"invalid id format",
 	)
 
+	// ErrTooManyRequests indicates that the client has sent too many requests within limitted time
 	ErrTooManyRequests = New(
 		TooManyRequests,
 		"RATE_LIMIT_EXCEEDED",
 		"too many requests, please try again later",
+	)
+
+	// ErrNotFound indicates that the request the client made is not available. 404!
+	ErrNotFound = New(
+		NotFound,
+		"NOT_FOUND",
+		"resource not found",
 	)
 )
