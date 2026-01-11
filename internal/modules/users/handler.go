@@ -35,7 +35,7 @@ func NewHandler(userService Service) *Handler {
 //	@Router			/users [post]
 func (h *Handler) Create(c *gin.Context) {
 	var req CreateUserRequest
-	if err := httpx.BindJSON(c, &req); err != nil {
+	if err := httpx.BindAndValidateJSON(c, &req); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -70,7 +70,7 @@ func (h *Handler) Create(c *gin.Context) {
 func (h *Handler) Get(c *gin.Context) {
 	var params IDParam
 
-	if err := httpx.BindURI(c, &params); err != nil {
+	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -110,7 +110,7 @@ func (h *Handler) Get(c *gin.Context) {
 //	@Router			/users [get]
 func (h *Handler) List(c *gin.Context) {
 	var query pagination.QueryList
-	if err := httpx.BindQuery(c, &query); err != nil {
+	if err := httpx.BindAndValidateURI(c, &query); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -154,7 +154,7 @@ func (h *Handler) List(c *gin.Context) {
 func (h *Handler) Delete(c *gin.Context) {
 	var params IDParam
 
-	if err := httpx.BindURI(c, &params); err != nil {
+	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -184,7 +184,7 @@ func (h *Handler) Delete(c *gin.Context) {
 func (h *Handler) Restore(c *gin.Context) {
 	var params IDParam
 
-	if err := httpx.BindURI(c, &params); err != nil {
+	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -214,7 +214,7 @@ func (h *Handler) Restore(c *gin.Context) {
 func (h *Handler) Block(c *gin.Context) {
 	var params IDParam
 
-	if err := httpx.BindURI(c, &params); err != nil {
+	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -250,7 +250,7 @@ func (h *Handler) Block(c *gin.Context) {
 func (h *Handler) Reactivate(c *gin.Context) {
 	var params IDParam
 
-	if err := httpx.BindURI(c, &params); err != nil {
+	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}

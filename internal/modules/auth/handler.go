@@ -40,7 +40,7 @@ func NewHandler(authService Service, ctx *app.Context) *Handler {
 //	@Router			/auth/login [post]
 func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
-	if err := httpx.BindJSON(c, &req); err != nil {
+	if err := httpx.BindAndValidateJSON(c, &req); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}

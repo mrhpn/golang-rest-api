@@ -11,16 +11,16 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/validation"
 )
 
-// BindJSON binds the request body to the given struct.
-func BindJSON(c *gin.Context, req any) error {
+// BindAndValidateJSON binds the request body to the given struct.
+func BindAndValidateJSON(c *gin.Context, req any) error {
 	if err := c.ShouldBindJSON(req); err != nil {
 		return handleBindingError(err)
 	}
 	return nil
 }
 
-// BindURI binds the request URI to the given struct.
-func BindURI(c *gin.Context, req any) error {
+// BindAndValidateURI binds the request URI to the given struct.
+func BindAndValidateURI(c *gin.Context, req any) error {
 	if err := c.ShouldBindUri(req); err != nil {
 		return apperror.New(
 			apperror.InvalidInput,
@@ -31,8 +31,8 @@ func BindURI(c *gin.Context, req any) error {
 	return nil
 }
 
-// BindQuery binds the query parameters to the given struct.
-func BindQuery(c *gin.Context, req any) error {
+// BindAndValidateQuery binds the query parameters to the given struct.
+func BindAndValidateQuery(c *gin.Context, req any) error {
 	if err := c.ShouldBindQuery(req); err != nil {
 		return handleBindingError(err)
 	}
