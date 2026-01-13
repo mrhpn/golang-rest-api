@@ -55,8 +55,8 @@ func RequireAuth(ctx *app.Context) gin.HandlerFunc {
 			Logger()
 
 		// 4. inject claims into req context
-		ctx := context.WithValue(c.Request.Context(), userKey, claims)
-		c.Request = c.Request.WithContext(l.WithContext(ctx))
+		reqCtx := context.WithValue(c.Request.Context(), userKey, claims)
+		c.Request = c.Request.WithContext(l.WithContext(reqCtx))
 
 		c.Next()
 	}

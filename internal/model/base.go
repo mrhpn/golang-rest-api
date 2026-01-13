@@ -1,5 +1,5 @@
-// Package models provides basic model structure for application's business models
-package models
+// Package model provides basic model structure for application's business models
+package model
 
 import (
 	"time"
@@ -8,8 +8,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// BaseModel includes common fields that are required in every business models
-type BaseModel struct {
+// Base includes common fields that are required in every business models
+type Base struct {
 	ID        string         `gorm:"primaryKey;type:char(26)" json:"id"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
@@ -17,7 +17,7 @@ type BaseModel struct {
 }
 
 // BeforeCreate generates ulid before creating a database record
-func (b *BaseModel) BeforeCreate(_ *gorm.DB) error {
+func (b *Base) BeforeCreate(_ *gorm.DB) error {
 	if b.ID == "" {
 		b.ID = ulid.Make().String()
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/pagination"
+	repo "github.com/mrhpn/go-rest-api/internal/repository"
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
@@ -24,16 +25,20 @@ type Repository interface {
 }
 
 type repository struct {
-	db *gorm.DB
+	repo.Base
 }
 
 // NewRepository constructs a users Repository backed by a GORM database.
 func NewRepository(db *gorm.DB) Repository {
-	return &repository{db: db}
+	return &repository{
+		Base: repo.Base{
+			DBInstance: db,
+		},
+	}
 }
 
 func (r *repository) Create(ctx context.Context, user *User) error {
-	err := r.db.WithContext(ctx).Create(user).Error
+	err := r.DB(ctx).Create(user).Error
 	if err != nil {
 		// Wrap database errors to preserve context while maintaining client-safe messages
 		return apperror.Wrap(
@@ -48,7 +53,7 @@ func (r *repository) Create(ctx context.Context, user *User) error {
 
 func (r *repository) FindByID(ctx context.Context, id string) (*User, error) {
 	var user User
-	err := r.db.WithContext(ctx).First(&user, "id = ?", id).Error
+	err := r.DB(ctx).First(&user, "id = ?", id).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -68,7 +73,7 @@ func (r *repository) FindByID(ctx context.Context, id string) (*User, error) {
 
 func (r *repository) FindByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
-	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	err := r.DB(ctx).Where("email = ?", email).First(&user).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -91,7 +96,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 	var total int64
 
 	// 1. Get total count using the SearchScope
-	err := r.db.WithContext(ctx).Model(&User{}).
+	err := r.DB(ctx).Model(&User{}).
 		Scopes(pagination.SearchScope(opts)).
 		Count(&total).Error
 	if err != nil {
@@ -105,7 +110,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 
 	// 2. Fetch data using the Paginate Scope
 	// If we add relationships later, don't forget to use Preload here
-	err = r.db.WithContext(ctx).
+	err = r.DB(ctx).
 		Scopes(pagination.Paginate(opts)).
 		Find(&users).Error
 	if err != nil {
@@ -121,7 +126,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 }
 
 func (r *repository) Delete(ctx context.Context, id string) (int64, error) {
-	result := r.db.WithContext(ctx).Delete(&User{}, "id = ?", id)
+	result := r.DB(ctx).Delete(&User{}, "id = ?", id)
 	if result.Error != nil {
 		return 0, apperror.Wrap(
 			apperror.Internal,
@@ -134,8 +139,8 @@ func (r *repository) Delete(ctx context.Context, id string) (int64, error) {
 }
 
 func (r *repository) Restore(ctx context.Context, id string) (int64, error) {
-	result := r.db.Unscoped().
-		WithContext(ctx).
+	result := r.DB(ctx).
+		Unscoped().
 		Model(&User{}).
 		Where("id = ?", id).
 		Update("deleted_at", nil)
@@ -153,7 +158,7 @@ func (r *repository) Restore(ctx context.Context, id string) (int64, error) {
 }
 
 func (r *repository) Block(ctx context.Context, id string) (int64, error) {
-	result := r.db.WithContext(ctx).
+	result := r.DB(ctx).
 		Model(&User{}).
 		Where("id = ?", id).
 		Update("status", security.UserStatusBlocked)
@@ -171,7 +176,7 @@ func (r *repository) Block(ctx context.Context, id string) (int64, error) {
 }
 
 func (r *repository) Reactivate(ctx context.Context, id string) (int64, error) {
-	result := r.db.WithContext(ctx).
+	result := r.DB(ctx).
 		Model(&User{}).
 		Where("id = ?", id).
 		Update("status", security.UserStatusInactive)

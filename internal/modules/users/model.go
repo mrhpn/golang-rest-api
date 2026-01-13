@@ -1,13 +1,13 @@
 package users
 
 import (
-	"github.com/mrhpn/go-rest-api/internal/models"
+	"github.com/mrhpn/go-rest-api/internal/model"
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
 // User represents the db model for user
 type User struct {
-	models.BaseModel
+	model.Base
 
 	Email        string              `gorm:"uniqueIndex;not null"`
 	PasswordHash string              `gorm:"not null"`

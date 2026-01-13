@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/constants"
-	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
 // Timeout creates a middleware that cancels the request context after the specified duration
@@ -28,35 +27,14 @@ func Timeout(timeout time.Duration) gin.HandlerFunc {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Channel to signal completion
-		done := make(chan struct{})
-		go func() {
-			c.Next()
-			close(done)
-		}()
+		c.Next()
 
 		// Wait for either completion or timeout
-		select {
-		case <-done:
-			// Request completed successfully
-		case <-ctx.Done():
-			// Timeout occurred
-			if ctx.Err() == context.DeadlineExceeded {
-				log.Ctx(c.Request.Context()).Warn().
-					Dur("timeout", timeout).
-					Str("path", c.Request.URL.Path).
-					Msg("request timeout exceeded")
+		if ctx.Err() == context.DeadlineExceeded {
+			log.Ctx(c.Request.Context()).Warn().Msg("request timeout exceeded")
 
-				// Only send response if not already sent
-				if !c.Writer.Written() {
-					httpx.Fail(
-						c,
-						http.StatusRequestTimeout,
-						"REQUEST_TIMEOUT",
-						"request timeout exceeded",
-						nil,
-					)
-					c.Abort()
-				}
+			if !c.Writer.Written() {
+				c.AbortWithStatus(http.StatusRequestTimeout)
 			}
 		}
 	}
