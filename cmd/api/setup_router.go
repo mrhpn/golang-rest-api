@@ -47,7 +47,7 @@ func setupRouter(ctx *app.Context) *gin.Engine {
 	if requestTimeout <= 0 {
 		requestTimeout = constants.RequestTimeoutSecond * time.Second
 	}
-	router.Use(middlewares.Timeout(requestTimeout))
+	router.Use(middlewares.RequestTimeout(requestTimeout))
 
 	// Rate limiting middleware (if enabled)
 	// Uses Redis if available, falls back to in-memory if not

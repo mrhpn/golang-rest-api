@@ -23,6 +23,8 @@ const (
 	Internal Kind = "INTERNAL"
 	// TooManyRequests indicates client sends too many requests to server.
 	TooManyRequests Kind = "RATE_LIMIT_EXCEEDED"
+	// RequestTimeout indicates client's request is timeout and execution will be stopped.
+	RequestTimeout Kind = "REQUEST_TIMEOUT"
 )
 
 // AppError represents an application-level error with structured information

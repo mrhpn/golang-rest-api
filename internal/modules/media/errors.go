@@ -22,6 +22,12 @@ var (
 		"invalid file",
 	)
 
+	errFileEmpty = apperror.New(
+		apperror.BadRequest,
+		"FILE_EMPTY",
+		"file is empty or invalid",
+	)
+
 	errFileTooLarge = apperror.New(
 		apperror.BadRequest,
 		"FILE_TOO_LARGE",

@@ -64,6 +64,8 @@ func mapKindToStatus(kind apperror.Kind) int {
 		return http.StatusForbidden
 	case apperror.TooManyRequests:
 		return http.StatusTooManyRequests
+	case apperror.RequestTimeout:
+		return http.StatusGatewayTimeout
 	case apperror.Internal:
 		return http.StatusInternalServerError
 	}

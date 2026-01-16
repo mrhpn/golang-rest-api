@@ -106,20 +106,26 @@ func (h *Handler) handleUpload(c *gin.Context, subDir fileCategory, category fil
 		return
 	}
 
-	// 4. validate size
+	// 4. validate size - check for empty or invalid size
+	if file.Size <= 0 {
+		httpx.FailWithError(c, errFileEmpty)
+		return
+	}
+
+	// 5. validate maximum size
 	if file.Size > policy.MaxSize {
 		httpx.FailWithError(c, errFileTooLarge)
 		return
 	}
 
-	// 5. validate extension
+	// 6. validate extension
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if !policy.AllowedExtensions[ext] {
 		httpx.FailWithError(c, errInvalidFile)
 		return
 	}
 
-	// 6. upload
+	// 7. upload
 	url, err := h.mediaService.Upload(httpx.ReqCtx(c), file, subDir)
 	if err != nil {
 		httpx.FailWithError(c, err)
