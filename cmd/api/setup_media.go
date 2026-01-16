@@ -1,13 +1,15 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/config"
 	"github.com/mrhpn/go-rest-api/internal/modules/media"
 )
 
-func setupMedia(cfg *config.Config) media.Service {
+func setupMedia(cfg *config.Config) (media.Service, func(), error) {
 	svc, err := media.NewMinioService(
 		cfg.Storage.Host,
 		cfg.Storage.AccessKey,
@@ -15,10 +17,18 @@ func setupMedia(cfg *config.Config) media.Service {
 		cfg.Storage.BucketName,
 		cfg.Storage.UseSSL,
 	)
-
 	if err != nil {
-		log.Fatal().Err(err).Msg("❌ failed to initialize MinIO storage service")
+		return nil, nil, fmt.Errorf("failed to setup media service: %w", err)
 	}
 
-	return svc
+	cleanup := func() {
+		log.Info().
+			Str("service", "minio").
+			Str("host", cfg.Storage.Host).
+			Str("bucket", cfg.Storage.BucketName).
+			Bool("ssl", cfg.Storage.UseSSL).
+			Msg("✓ MinIO client cleanup completed")
+	}
+
+	return svc, cleanup, nil
 }

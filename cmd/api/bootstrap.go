@@ -1,13 +1,44 @@
 package main
 
-func runApplication() {
-	cfg := setupConfig()                                     // config
-	logger := setupLogger(cfg)                               // logger
-	db := setupDatabase(cfg)                                 // database
-	redis := setupRedis(cfg)                                 // redis (optional)
-	media := setupMedia(cfg)                                 // storage
+import (
+	"github.com/rs/zerolog/log"
+)
+
+func runApplication() error {
+	// Setup config
+	cfg := setupConfig()
+
+	// Setup logger
+	logger := setupLogger(cfg)
+
+	// Setup database connection
+	db, dbCleanup, dbErr := setupDatabase(cfg)
+	if dbErr != nil {
+		log.Error().Err(dbErr).Msg("database setup failed")
+		return dbErr
+	}
+	defer dbCleanup()
+
+	// Setup redis (optional)
+	redis, redisCleanup, redisErr := setupRedis(cfg)
+	if redisErr != nil {
+		log.Error().Err(redisErr).Msg("redis setup failed")
+		return redisErr
+	}
+	defer redisCleanup()
+
+	// Setup media storage (minio)
+	media, mediaCleanup, mediaErr := setupMedia(cfg)
+	if mediaErr != nil {
+		log.Error().Err(mediaErr).Msg("media setup failed")
+		return mediaErr
+	}
+	defer mediaCleanup()
+
 	appCtx := setupAppContext(cfg, db, redis, logger, media) // app context
 	router := setupRouter(appCtx)                            // router
 	server := setupHTTPServer(cfg, router)                   // server
-	gracefulShutdown(cfg, server, db)                        // graceful shutdown
+
+	// Start server and handle shutdown
+	return gracefulShutdown(cfg, server)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/constants"
@@ -34,6 +35,8 @@ func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize minio client: %w", err)
 	}
+
+	log.Info().Msg("✅ MinIO connected successfully")
 
 	// 1. auto-create bucket if it doesn't exist
 	ctx, cancel := context.WithTimeout(context.Background(), bucketCreateTimeout)

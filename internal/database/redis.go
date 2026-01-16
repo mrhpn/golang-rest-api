@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/config"
 )
@@ -47,12 +46,6 @@ func ConnectRedis(cfg *config.RedisConfig) (*redis.Client, error) {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
-
-	log.Info().
-		Str("host", cfg.Host).
-		Str("port", cfg.Port).
-		Int("db", cfg.DB).
-		Msg("Redis connection established successfully")
 
 	return rdb, nil
 }
