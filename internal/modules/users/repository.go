@@ -22,6 +22,7 @@ type Repository interface {
 	Restore(ctx context.Context, id string) (int64, error)
 	Block(ctx context.Context, id string) (int64, error)
 	Reactivate(ctx context.Context, id string) (int64, error)
+	Activate(ctx context.Context, id string) (int64, error)
 }
 
 type repository struct {
@@ -186,6 +187,24 @@ func (r *repository) Reactivate(ctx context.Context, id string) (int64, error) {
 			apperror.Internal,
 			apperror.ErrDatabaseError.Code,
 			"failed to reactivate user",
+			result.Error,
+		)
+	}
+
+	return result.RowsAffected, nil
+}
+
+func (r *repository) Activate(ctx context.Context, id string) (int64, error) {
+	result := r.DB(ctx).
+		Model(&User{}).
+		Where("id = ?", id).
+		Update("status", security.UserStatusActive)
+
+	if result.Error != nil {
+		return 0, apperror.Wrap(
+			apperror.Internal,
+			apperror.ErrDatabaseError.Code,
+			"failed to activate user",
 			result.Error,
 		)
 	}

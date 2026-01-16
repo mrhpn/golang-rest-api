@@ -22,6 +22,7 @@ type Service interface {
 	Restore(ctx context.Context, id string) error
 	Block(ctx context.Context, id string) error
 	Reactivate(ctx context.Context, id string) error
+	Activate(ctx context.Context, id string) error
 }
 
 type service struct {
@@ -151,5 +152,19 @@ func (s *service) Reactivate(ctx context.Context, id string) error {
 
 	log.Ctx(ctx).Info().Str("user_id", id).Msg("user reactivated")
 
+	return nil
+}
+
+func (s *service) Activate(ctx context.Context, id string) error {
+	affected, err := s.repo.Activate(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return errUserNotFound
+	}
+
+	log.Ctx(ctx).Info().Str("user_id", id).Msg("user activated")
 	return nil
 }

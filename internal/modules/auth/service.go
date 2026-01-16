@@ -46,7 +46,7 @@ func (s *service) Login(ctx context.Context, email, password string) (*security.
 	}
 
 	// 4. update user status to active on successful login
-	if err = s.userService.Reactivate(ctx, user.ID); err != nil {
+	if err = s.userService.Activate(ctx, user.ID); err != nil {
 		return nil, nil, err
 	}
 
