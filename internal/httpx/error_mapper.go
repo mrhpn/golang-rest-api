@@ -16,7 +16,7 @@ type mappedError struct {
 	Fields  map[string]string // optional field-specific errors (used in validations)
 }
 
-// MapError maps an error to an HTTP response structure
+// mapError maps an error to an HTTP response structure
 // It sanitizes internal errors and ensures client-safe messages
 // Note: Error logging is handled in FailWithError to include request context
 func mapError(err error) mappedError {

@@ -85,7 +85,7 @@ func createRateLimitHandler(ctx *app.Context, rateStr string) gin.HandlerFunc {
 			limit := c.GetHeader("X-RateLimit-Limit")
 			reset := c.GetHeader("X-RateLimit-Reset")
 
-			log.Ctx(c.Request.Context()).Warn().
+			log.Ctx(httpx.ReqCtx(c)).Warn().
 				Str("ip", key).
 				Str("path", c.Request.URL.Path).
 				Str("rate", rateStr).

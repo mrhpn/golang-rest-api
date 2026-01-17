@@ -18,8 +18,8 @@ import (
 )
 
 // Register registers app's api endpoints
-func Register(router *gin.Engine, ctx *app.Context) {
-	authRateLimit := ctx.Cfg.RateLimit.AuthRate
+func Register(router *gin.Engine, appCtx *app.Context) {
+	authRateLimit := appCtx.Cfg.RateLimit.AuthRate
 	if authRateLimit == "" {
 		authRateLimit = constants.RateLimitAuth // Default: 7 requests per minute for auth endpoints
 	}
@@ -33,20 +33,20 @@ func Register(router *gin.Engine, ctx *app.Context) {
 
 	// ----------------------- Set up (Wiring) ----------------------- //
 	// health
-	healthH := health.NewHandler(ctx)
+	healthH := health.NewHandler(appCtx)
 
 	// users
-	userR := users.NewRepository(ctx.DB)
+	userR := users.NewRepository(appCtx.DB)
 	userS := users.NewService(userR)
 	userH := users.NewHandler(userS)
 
 	// auth
 	// Use SecurityHandler from context instead of creating a new one
-	authS := auth.NewService(userS, ctx.SecurityHandler)
-	authH := auth.NewHandler(authS, ctx)
+	authS := auth.NewService(userS, appCtx.SecurityHandler)
+	authH := auth.NewHandler(authS, appCtx)
 
 	// media
-	mediaH := media.NewHandler(ctx.MediaService)
+	mediaH := media.NewHandler(appCtx.MediaService)
 
 	// ----------------------- ROUTES ----------------------- //
 
@@ -64,7 +64,7 @@ func Register(router *gin.Engine, ctx *app.Context) {
 	// ----------------------- auth ----------------------- //
 	// Apply stricter rate limiting for auth endpoints using Redis
 	authGroup := api.Group("/" + constants.APIAuthPrefix)
-	authGroup.Use(mw.RateLimitRedisWithConfig(ctx, authRateLimit))
+	authGroup.Use(mw.RateLimitRedisWithConfig(appCtx, authRateLimit))
 	{
 		authGroup.POST("/login", authH.Login)
 		authGroup.POST("/refresh", authH.Refresh)
@@ -72,7 +72,7 @@ func Register(router *gin.Engine, ctx *app.Context) {
 
 	// ----------------------- users ----------------------- //
 	usersGroup := api.Group("/users")
-	usersGroup.Use(mw.RequireAuth(ctx))
+	usersGroup.Use(mw.RequireAuth(appCtx))
 	{
 		usersGroup.GET("", userH.List)
 		usersGroup.GET("/:id", userH.Get)
@@ -85,7 +85,7 @@ func Register(router *gin.Engine, ctx *app.Context) {
 
 	// ----------------------- media ----------------------- //
 	mediaGroup := api.Group("/media")
-	mediaGroup.Use(mw.RequireAuth(ctx))
+	mediaGroup.Use(mw.RequireAuth(appCtx))
 	{
 		mediaGroup.POST("/upload/profile", mediaH.UploadProfilePicture)
 	}

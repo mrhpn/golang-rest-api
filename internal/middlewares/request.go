@@ -4,10 +4,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+
+	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
 // RequestID middleware sets request id to the context, into the response header, and logs for better traceability.
 func RequestID(env string) gin.HandlerFunc {
+	switch env {
+	case "development", "production", "testing":
+	default:
+		env = "development"
+	}
+
 	return func(c *gin.Context) {
 		requestID := c.GetHeader("X-Request-ID")
 		if requestID == "" {
@@ -25,7 +33,7 @@ func RequestID(env string) gin.HandlerFunc {
 			Str("request_id", requestID).
 			Logger()
 		// 4. inject this logger into the Stanard Library Context
-		c.Request = c.Request.WithContext(l.WithContext(c.Request.Context()))
+		c.Request = c.Request.WithContext(l.WithContext(httpx.ReqCtx(c)))
 
 		c.Next()
 	}

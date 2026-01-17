@@ -16,7 +16,7 @@ func Recovery() gin.HandlerFunc {
 		defer func() {
 			if r := recover(); r != nil {
 				// Log panic with full context
-				log.Ctx(c.Request.Context()).
+				log.Ctx(httpx.ReqCtx(c)).
 					Error().
 					Interface("panic", r).
 					Str("path", c.Request.URL.Path).

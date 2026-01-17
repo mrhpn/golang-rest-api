@@ -48,14 +48,14 @@ func RequireAuth(ctx *app.Context) gin.HandlerFunc {
 		}
 
 		// 3. tag the logger with UserID for better traceability
-		l := log.Ctx(c.Request.Context()).
+		l := log.Ctx(httpx.ReqCtx(c)).
 			With().
 			Str("user_id", claims.UserID).
 			Str("role", string(claims.Role)).
 			Logger()
 
 		// 4. inject claims into req context
-		reqCtx := context.WithValue(c.Request.Context(), userKey, claims)
+		reqCtx := context.WithValue(httpx.ReqCtx(c), userKey, claims)
 		c.Request = c.Request.WithContext(l.WithContext(reqCtx))
 
 		c.Next()
@@ -73,7 +73,7 @@ func AllowRoles(allowedRoles ...security.Role) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		// 1. pull claims from context
-		val := c.Request.Context().Value(userKey)
+		val := httpx.ReqCtx(c).Value(userKey)
 		claims, ok := val.(*security.UserClaims)
 		if !ok || claims == nil {
 			httpx.Fail(
@@ -88,7 +88,7 @@ func AllowRoles(allowedRoles ...security.Role) gin.HandlerFunc {
 
 		// 2. check if user's role is in allowed list
 		if !slices.Contains(allowedRoles, claims.Role) {
-			log.Ctx(c.Request.Context()).Warn().
+			log.Ctx(httpx.ReqCtx(c)).Warn().
 				Str("user_id", claims.UserID).
 				Str("role", string(claims.Role)).
 				Interface("required_roles", allowedRoles).

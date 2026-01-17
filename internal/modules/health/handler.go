@@ -49,7 +49,7 @@ func (h *Handler) Readiness(c *gin.Context) {
 	checks := make(map[string]string)
 	allHealthy := true
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), healthCheckTimeout)
+	ctx, cancel := context.WithTimeout(httpx.ReqCtx(c), healthCheckTimeout)
 	defer cancel()
 
 	// Check database connectivity

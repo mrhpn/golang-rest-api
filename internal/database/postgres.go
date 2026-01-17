@@ -53,18 +53,21 @@ func (l *CustomGormLogger) Trace(ctx context.Context, begin time.Time, fc func()
 
 	switch {
 	case err != nil && !errors.Is(err, gorm.ErrRecordNotFound):
+		// Log errors with full context
 		lgr.Error().
 			Err(err).
 			Dur("elapsed", elapsed).
 			Int64("rows", rows).
 			Msg(sql)
 	case elapsed > maxElapsedTimeMillisecond:
+		// Log slow queries as warnings
 		lgr.Warn().
 			Dur("elapsed", elapsed).
 			Int64("rows", rows).
 			Str("perf", "SLOW_QUERY").
 			Msgf("%s", sql)
 	default:
+		// Log normal queries as debug
 		lgr.Debug().
 			Dur("elapsed", elapsed).
 			Int64("rows", rows).

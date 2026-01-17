@@ -3,22 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 
 	"github.com/mrhpn/go-rest-api/internal/config"
-)
-
-const (
-	poolSize           = 10
-	minIdleConns       = 5
-	dialTimeout        = 5 * time.Second
-	readTimeout        = 3 * time.Second
-	writeTimeout       = 3 * time.Second
-	connMaxIdleTime    = 5 * time.Minute
-	connMaxLifetime    = 30 * time.Minute
-	healthCheckTimeout = 5 * time.Second
+	"github.com/mrhpn/go-rest-api/internal/constants"
 )
 
 // ConnectRedis establishes a connection to Redis
@@ -28,23 +17,23 @@ func ConnectRedis(cfg *config.RedisConfig) (*redis.Client, error) {
 		Password: cfg.Password,
 		DB:       cfg.DB,
 		// Connection pool settings
-		PoolSize:     poolSize,
-		MinIdleConns: minIdleConns,
+		PoolSize:     constants.RedisPoolSize,
+		MinIdleConns: constants.RedisMinIdleConns,
 		// Timeouts
-		DialTimeout:  dialTimeout,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
+		DialTimeout:  constants.RedisDialTimeoutSecond,
+		ReadTimeout:  constants.RedisReadTimeoutSecond,
+		WriteTimeout: constants.RedisWriteTimeoutSecond,
 		// Connection lifecycle
-		ConnMaxIdleTime: connMaxIdleTime,
-		ConnMaxLifetime: connMaxLifetime,
+		ConnMaxIdleTime: constants.RedisConnMaxIdleTimeMinute,
+		ConnMaxLifetime: constants.RedisConnMaxLifetimeMinute,
 	})
 
 	// Test connection
-	ctx, cancel := context.WithTimeout(context.Background(), healthCheckTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), constants.RedisHealthCheckTimeoutSecond)
 	defer cancel()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+		return nil, fmt.Errorf("%w", err)
 	}
 
 	return rdb, nil

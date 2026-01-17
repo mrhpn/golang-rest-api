@@ -69,7 +69,6 @@ func (h *Handler) Create(c *gin.Context) {
 //	@Router			/users/{id} [get]
 func (h *Handler) Get(c *gin.Context) {
 	var params IDParam
-
 	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -153,7 +152,6 @@ func (h *Handler) List(c *gin.Context) {
 //	@Router			/users/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
 	var params IDParam
-
 	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -183,7 +181,6 @@ func (h *Handler) Delete(c *gin.Context) {
 //	@Router			/users/{id}/restore [put]
 func (h *Handler) Restore(c *gin.Context) {
 	var params IDParam
-
 	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -213,7 +210,6 @@ func (h *Handler) Restore(c *gin.Context) {
 //	@Router			/users/{id}/block [put]
 func (h *Handler) Block(c *gin.Context) {
 	var params IDParam
-
 	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -249,7 +245,6 @@ func (h *Handler) Block(c *gin.Context) {
 //	@Router			/users/{id}/reactivate [put]
 func (h *Handler) Reactivate(c *gin.Context) {
 	var params IDParam
-
 	if err := httpx.BindAndValidateURI(c, &params); err != nil {
 		httpx.FailWithError(c, err)
 		return

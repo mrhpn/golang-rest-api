@@ -14,14 +14,14 @@ const refreshTokenCookieName = "refresh_token"
 // Handler handles authentication-related HTTP endpoints such as login, token refresh, and access control–protected actions.
 type Handler struct {
 	authService Service
-	ctx         *app.Context
+	appCtx      *app.Context
 }
 
 // NewHandler constructs an authentication Handler with its required dependencies
-func NewHandler(authService Service, ctx *app.Context) *Handler {
+func NewHandler(authService Service, appCtx *app.Context) *Handler {
 	return &Handler{
 		authService: authService,
-		ctx:         ctx,
+		appCtx:      appCtx,
 	}
 }
 
@@ -45,24 +45,22 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	ctx := httpx.ReqCtx(c)
-
-	tokenPair, user, err := h.authService.Login(ctx, req.Email, req.Password)
+	tokenPair, user, err := h.authService.Login(httpx.ReqCtx(c), req.Email, req.Password)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
 	// set refresh token in cookie
-	cookieMaxAge := h.ctx.Cfg.JWT.RefreshTokenExpirationSecond
+	cookieMaxAge := h.appCtx.Cfg.JWT.RefreshTokenExpirationSecond
 	c.SetCookie(
-		refreshTokenCookieName,            // name
-		tokenPair.RefreshToken,            // value
-		cookieMaxAge,                      // max age
-		"/",                               // path
-		"",                                // domain (empty for localhost)
-		h.ctx.Cfg.AppEnv != "development", // secure (set to true in production with HTTPS)
-		true,                              // httpOnly
+		refreshTokenCookieName,               // name
+		tokenPair.RefreshToken,               // value
+		cookieMaxAge,                         // max age
+		"/",                                  // path
+		"",                                   // domain (empty for localhost)
+		h.appCtx.Cfg.AppEnv != "development", // secure (set to true in production with HTTPS)
+		true,                                 // httpOnly
 	)
 
 	httpx.OK(c, http.StatusOK, ToLoginResponse(tokenPair.AccessToken, user))
@@ -94,9 +92,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	ctx := httpx.ReqCtx(c)
-
-	newAccessToken, err := h.authService.RefreshToken(ctx, refreshToken)
+	newAccessToken, err := h.authService.RefreshToken(httpx.ReqCtx(c), refreshToken)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return

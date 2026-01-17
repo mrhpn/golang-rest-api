@@ -75,7 +75,7 @@ func FailWithError(c *gin.Context, err error) {
 	mapped := mapError(err)
 
 	// Log error with request context (request_id is already in context from RequestID middleware)
-	logger := log.Ctx(c.Request.Context())
+	logger := log.Ctx(ReqCtx(c))
 
 	// Log based on severity:
 	// - 5xx errors: log as Error (server issues)

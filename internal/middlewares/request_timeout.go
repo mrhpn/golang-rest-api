@@ -10,6 +10,7 @@ import (
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/constants"
+	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
 // RequestTimeout creates a middleware that cancels the request context after the specified duration.
@@ -19,9 +20,12 @@ import (
 //   - DON'T write to gin.Context from goroutines spawned within handlers
 //   - The timeout applies to the entire request handler chain
 //   - When timeout occurs, the context is cancelled, propagating to DB queries and external calls
-func RequestTimeout(timeoutDuration time.Duration) gin.HandlerFunc {
-	if timeoutDuration <= 0 {
-		timeoutDuration = constants.RequestTimeoutSecond * time.Second
+func RequestTimeout(timeoutSeconds int) gin.HandlerFunc {
+	var timeoutDuration time.Duration
+	if timeoutSeconds <= 0 {
+		timeoutDuration = time.Duration(constants.RequestTimeoutSecond) * time.Second
+	} else {
+		timeoutDuration = time.Duration(timeoutSeconds) * time.Second
 	}
 
 	return timeout.New(
@@ -32,7 +36,7 @@ func RequestTimeout(timeoutDuration time.Duration) gin.HandlerFunc {
 
 func createTimeoutResponseHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Ctx(c.Request.Context()).Warn().Msg("request timeout exceeded")
+		log.Ctx(httpx.ReqCtx(c)).Warn().Msg("request timeout exceeded")
 
 		c.JSON(http.StatusGatewayTimeout, gin.H{
 			"success": false,

@@ -5,20 +5,18 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/mrhpn/go-rest-api/internal/app"
 )
 
 // CORS implements cors policies
-func CORS(ctx *app.Context) gin.HandlerFunc {
+func CORS(allowedOrigins []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 		allowOrigin := ""
 
 		// determine if the origin is allowed
-		if len(ctx.Cfg.HTTP.AllowedOrigins) > 0 && ctx.Cfg.HTTP.AllowedOrigins[0] == "*" {
+		if len(allowedOrigins) > 0 && allowedOrigins[0] == "*" {
 			allowOrigin = origin // !use origin, instead of "*"
-		} else if slices.Contains(ctx.Cfg.HTTP.AllowedOrigins, origin) {
+		} else if slices.Contains(allowedOrigins, origin) {
 			allowOrigin = origin
 		}
 
