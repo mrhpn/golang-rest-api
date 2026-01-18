@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
@@ -54,13 +55,13 @@ func (h *Handler) Login(c *gin.Context) {
 	// set refresh token in cookie
 	cookieMaxAge := h.appCtx.Cfg.JWT.RefreshTokenExpirationSecond
 	c.SetCookie(
-		refreshTokenCookieName,               // name
-		tokenPair.RefreshToken,               // value
-		cookieMaxAge,                         // max age
-		"/",                                  // path
-		"",                                   // domain (empty for localhost)
-		h.appCtx.Cfg.AppEnv != "development", // secure (set to true in production with HTTPS)
-		true,                                 // httpOnly
+		refreshTokenCookieName,                  // name
+		tokenPair.RefreshToken,                  // value
+		cookieMaxAge,                            // max age
+		"/",                                     // path
+		"",                                      // domain (empty for localhost)
+		h.appCtx.Cfg.AppEnv != constants.EnvDev, // secure (set to true in production with HTTPS)
+		true,                                    // httpOnly
 	)
 
 	httpx.OK(c, http.StatusOK, ToLoginResponse(tokenPair.AccessToken, user))

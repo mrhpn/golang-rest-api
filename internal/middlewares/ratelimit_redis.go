@@ -1,9 +1,11 @@
 package middlewares
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -17,6 +19,8 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
+
+const healthCheckTimeout = 5 * time.Second
 
 // createRateLimitHandler creates a rate limit handler using ulule/limiter
 // rateStr should be in ulule/limiter format: "100-M" (100 per minute), "50-H" (50 per hour), "10-S" (10 per second)
@@ -144,5 +148,34 @@ func RateLimitRedis(ctx *app.Context) gin.HandlerFunc {
 // rateStr should be in ulule/limiter format: "100-M" (100 per minute), "50-H" (50 per hour), "10-S" (10 per second)
 // Use this for route-specific rate limiting (e.g., stricter limits for auth endpoints)
 func RateLimitRedisWithConfig(ctx *app.Context, rateStr string) gin.HandlerFunc {
+	if ctx.Cfg.AppEnv == constants.EnvDev && ctx.Redis != nil {
+		cleanupOldRateLimitKeysOnStartup(ctx)
+	}
+
 	return createRateLimitHandler(ctx, rateStr)
+}
+
+func cleanupOldRateLimitKeysOnStartup(ctx *app.Context) {
+	if ctx.Redis == nil {
+		return
+	}
+
+	cleanupCtx, cancel := context.WithTimeout(context.Background(), healthCheckTimeout)
+	defer cancel()
+
+	// Find all rate limit keys
+	keys, err := ctx.Redis.Keys(cleanupCtx, constants.RateLimitKeyPrefix+"*").Result()
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to fetch rate limit keys for cleanup")
+		return
+	}
+
+	if len(keys) > 0 {
+		// Delete all old rate limit keys
+		if err = ctx.Redis.Del(cleanupCtx, keys...).Err(); err != nil {
+			log.Warn().Err(err).Msg("failed to cleanup old rate limit keys")
+		} else {
+			log.Info().Int("count", len(keys)).Msg("Cleaned up old rate limit keys on startup")
+		}
+	}
 }

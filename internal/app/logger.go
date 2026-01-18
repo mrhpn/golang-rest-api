@@ -10,13 +10,14 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/mrhpn/go-rest-api/internal/config"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 )
 
 // SetupLogger sets up the global zerolog config and returns the logger.
 func SetupLogger(logCfg *config.LogConfig, env string) zerolog.Logger {
 	var writer io.Writer
 
-	if env == "development" {
+	if env == constants.EnvDev {
 		writer = zerolog.ConsoleWriter{
 			Out:        os.Stdout,
 			TimeFormat: "15:04:05",

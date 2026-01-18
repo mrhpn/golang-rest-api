@@ -13,7 +13,7 @@ import (
 func setupRouter(ctx *app.Context) *gin.Engine {
 	httpx.RegisterValidators()
 
-	if ctx.Cfg.AppEnv != "development" {
+	if ctx.Cfg.AppEnv != constants.EnvDev {
 		gin.SetMode(gin.ReleaseMode)
 	}
 

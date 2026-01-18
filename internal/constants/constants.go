@@ -37,6 +37,8 @@ const (
 	RefreshTokenExpirationSecond = 86400
 
 	JWTSecretMinLength = 32
+
+	RateLimitKeyPrefix = "ratelimit:"
 )
 
 // Media constants
@@ -56,6 +58,10 @@ const (
 
 // Server constants
 const (
+	EnvDev  = "development"
+	EnvProd = "production"
+	EnvTest = "testing"
+
 	RequestTimeoutSecond     = 30
 	RequestMaxBodySizeMB     = 50 * MB
 	ServerReadTimeoutSecond  = 20

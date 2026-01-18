@@ -5,15 +5,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
+	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
 // RequestID middleware sets request id to the context, into the response header, and logs for better traceability.
 func RequestID(env string) gin.HandlerFunc {
 	switch env {
-	case "development", "production", "testing":
+	case constants.EnvDev, constants.EnvProd, constants.EnvTest:
 	default:
-		env = "development"
+		env = constants.EnvDev
 	}
 
 	return func(c *gin.Context) {

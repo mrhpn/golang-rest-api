@@ -11,6 +11,7 @@ import (
 
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/apperror"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
@@ -118,7 +119,7 @@ func (h *Handler) RateLimitStatus(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(httpx.ReqCtx(c), healthCheckTimeout)
 	defer cancel()
 
-	keys, err := h.appCtx.Redis.Keys(ctx, "ratelimit:*").Result()
+	keys, err := h.appCtx.Redis.Keys(ctx, constants.RateLimitKeyPrefix+"*").Result()
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -150,7 +151,7 @@ func (h *Handler) RateLimitStatus(c *gin.Context) {
 //	@Success		200	{object}	health.RedisRateLimitResetResponse
 //	@Router			/health/rate-limit/reset [post]
 func (h *Handler) ResetRateLimit(c *gin.Context) {
-	if h.appCtx.Cfg.AppEnv != "development" {
+	if h.appCtx.Cfg.AppEnv != constants.EnvDev {
 		httpx.Fail(
 			c,
 			http.StatusForbidden,
@@ -173,14 +174,14 @@ func (h *Handler) ResetRateLimit(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(httpx.ReqCtx(c), healthCheckTimeout)
 	defer cancel()
 
-	keys, err := h.appCtx.Redis.Keys(ctx, "ratelimit:*").Result()
+	keys, err := h.appCtx.Redis.Keys(ctx, constants.RateLimitKeyPrefix+"*").Result()
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
 	if len(keys) > 0 {
-		if err := h.appCtx.Redis.Del(ctx, keys...).Err(); err != nil {
+		if err = h.appCtx.Redis.Del(ctx, keys...).Err(); err != nil {
 			httpx.FailWithError(c, err)
 			return
 		}

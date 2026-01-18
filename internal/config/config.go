@@ -98,7 +98,7 @@ func MustLoad() *Config {
 	}
 
 	cfg := &Config{
-		AppEnv: getEnv("APP_ENV", "development"),
+		AppEnv: getEnv("APP_ENV", constants.EnvDev),
 		Port:   getEnv("APP_PORT", "8080"),
 		DBURL:  getEnv("DATABASE_URL", ""),
 
