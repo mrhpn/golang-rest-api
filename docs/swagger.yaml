@@ -33,6 +33,29 @@ definitions:
       access_token:
         type: string
     type: object
+  health.RateLimitKeysDetails:
+    properties:
+      count:
+        type: integer
+      ttl:
+        type: string
+    type: object
+  health.RateLimitResponse:
+    properties:
+      keys:
+        additionalProperties:
+          $ref: '#/definitions/health.RateLimitKeysDetails'
+        type: object
+      total_keys:
+        type: integer
+    type: object
+  health.RedisRateLimitResetResponse:
+    properties:
+      keys_deleted:
+        type: integer
+      message:
+        type: string
+    type: object
   health.Response:
     properties:
       checks:
@@ -311,6 +334,32 @@ paths:
           schema:
             $ref: '#/definitions/health.Response'
       summary: Check liveness
+      tags:
+      - Health
+  /health/rate-limit/reset:
+    post:
+      description: Reset the rate limit
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.RedisRateLimitResetResponse'
+      summary: Reset rate limit
+      tags:
+      - Health
+  /health/rate-limit/status:
+    get:
+      description: Check the status of the rate limit
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.RateLimitResponse'
+      summary: Check rate limit status
       tags:
       - Health
   /health/ready:

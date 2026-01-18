@@ -151,6 +151,46 @@
                 }
             }
         },
+        "/health/rate-limit/reset": {
+            "post": {
+                "description": "Reset the rate limit",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Reset rate limit",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/health.RedisRateLimitResetResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health/rate-limit/status": {
+            "get": {
+                "description": "Check the status of the rate limit",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Check rate limit status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/health.RateLimitResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/health/ready": {
             "get": {
                 "description": "Check if service is ready to accept traffic (readiness probe)",
@@ -1186,6 +1226,42 @@
             "type": "object",
             "properties": {
                 "access_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "health.RateLimitKeysDetails": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "ttl": {
+                    "type": "string"
+                }
+            }
+        },
+        "health.RateLimitResponse": {
+            "type": "object",
+            "properties": {
+                "keys": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/health.RateLimitKeysDetails"
+                    }
+                },
+                "total_keys": {
+                    "type": "integer"
+                }
+            }
+        },
+        "health.RedisRateLimitResetResponse": {
+            "type": "object",
+            "properties": {
+                "keys_deleted": {
+                    "type": "integer"
+                },
+                "message": {
                     "type": "string"
                 }
             }

@@ -78,9 +78,9 @@ func AllowRoles(allowedRoles ...security.Role) gin.HandlerFunc {
 		if !ok || claims == nil {
 			httpx.Fail(
 				c,
-				http.StatusInternalServerError,
-				auth.ErrIdentityNotFoundInContext.Code,
-				auth.ErrIdentityNotFoundInContext.Message,
+				http.StatusUnauthorized,
+				auth.ErrUnauthorized.Code,
+				auth.ErrUnauthorized.Message,
 				nil,
 			)
 			return

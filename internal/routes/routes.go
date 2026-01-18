@@ -63,9 +63,17 @@ func Register(router *gin.Engine, appCtx *app.Context) {
 	router.GET("/health/ready", healthH.Readiness)
 
 	// Also expose under /api/v1 for consistency
-	api.GET("/health", healthH.Check)
-	api.GET("/health/live", healthH.Liveness)
-	api.GET("/health/ready", healthH.Readiness)
+	healthGroup := api.Group("/health")
+	{
+		healthGroup.GET("/", healthH.Check)
+		healthGroup.GET("/live", healthH.Liveness)
+		healthGroup.GET("/ready", healthH.Readiness)
+		rateLimitGroup := healthGroup.Group("/rate-limit")
+		{
+			rateLimitGroup.GET("/status", healthH.RateLimitStatus)
+			rateLimitGroup.POST("/reset", healthH.ResetRateLimit)
+		}
+	}
 
 	// ----------------------- auth ----------------------- //
 	// Apply stricter rate limiting for auth endpoints using Redis

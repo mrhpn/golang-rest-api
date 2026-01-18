@@ -30,4 +30,10 @@ var (
 		"REQUEST_TIMEOUT",
 		"request timeout exceeded",
 	)
+
+	ErrForbiddenInProd = apperror.New(
+		apperror.Forbidden,
+		"FORBIDDEN_IN_PROD",
+		"this operation is only allowed in development env",
+	)
 )
