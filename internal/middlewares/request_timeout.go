@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
+	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
 // RequestTimeout creates a middleware that cancels the request context after the specified duration.
@@ -41,8 +41,8 @@ func createTimeoutResponseHandler() gin.HandlerFunc {
 		c.JSON(http.StatusGatewayTimeout, gin.H{
 			"success": false,
 			"error": gin.H{
-				"code":    apperror.ErrRequestTimeout.Code,
-				"message": apperror.ErrRequestTimeout.Message,
+				"code":    security.ErrRequestTimeout.Code,
+				"message": security.ErrRequestTimeout.Message,
 			},
 		})
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/modules/auth"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
 	"github.com/mrhpn/go-rest-api/internal/modules/media"
+	"github.com/mrhpn/go-rest-api/internal/modules/posts"
 	"github.com/mrhpn/go-rest-api/internal/modules/users"
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
@@ -47,6 +48,11 @@ func Register(router *gin.Engine, appCtx *app.Context) {
 
 	// media
 	mediaH := media.NewHandler(appCtx.MediaService)
+
+	// posts
+	postR := posts.NewRepository(appCtx.DB)
+	postS := posts.NewService(postR)
+	postH := posts.NewHandler(postS)
 
 	// ----------------------- ROUTES ----------------------- //
 
@@ -88,5 +94,17 @@ func Register(router *gin.Engine, appCtx *app.Context) {
 	mediaGroup.Use(mw.RequireAuth(appCtx))
 	{
 		mediaGroup.POST("/upload/profile", mediaH.UploadProfilePicture)
+	}
+
+	// ----------------------- posts ----------------------- //
+	postsGroup := api.Group("/posts")
+	postsGroup.Use(mw.RequireAuth(appCtx))
+	{
+		postsGroup.POST("", postH.Create)
+		postsGroup.GET("", postH.List)
+		postsGroup.GET("/my", postH.ListMyPosts)
+		postsGroup.GET("/:id", postH.Get)
+		postsGroup.PUT("/:id", postH.Update)
+		postsGroup.DELETE("/:id", postH.Delete)
 	}
 }

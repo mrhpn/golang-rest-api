@@ -23,4 +23,11 @@ var (
 		"USER_BLOCKED",
 		"user is blocked",
 	)
+
+	// ErrRequestTimeout indicates that the requests coming from client is too many and server blocked for a period of time.
+	ErrRequestTimeout = apperror.New(
+		apperror.RequestTimeout,
+		"REQUEST_TIMEOUT",
+		"request timeout exceeded",
+	)
 )

@@ -89,6 +89,70 @@ definitions:
       url:
         type: string
     type: object
+  posts.CreatePostRequest:
+    properties:
+      content:
+        minLength: 1
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/posts.PostStatus'
+        enum:
+        - draft
+        - published
+        - archived
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  posts.PostResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/posts.PostStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  posts.PostStatus:
+    enum:
+    - draft
+    - published
+    - archived
+    type: string
+    x-enum-varnames:
+    - PostStatusDraft
+    - PostStatusPublished
+    - PostStatusArchived
+  posts.UpdatePostRequest:
+    properties:
+      content:
+        minLength: 1
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/posts.PostStatus'
+        enum:
+        - draft
+        - published
+        - archived
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
   security.Role:
     enum:
     - superadmin
@@ -298,6 +362,302 @@ paths:
       summary: Upload profile picture
       tags:
       - Media
+  /posts:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of posts with search and sorting
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: 'Items per page (default: 10, max: 100)'
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Search text (case-insensitive)
+        in: query
+        name: search
+        type: string
+      - description: Field to sort by (title, created_at, updated_at)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc or desc)
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/posts.PostResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/httpx.PaginationMeta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List posts
+      tags:
+      - Post
+    post:
+      consumes:
+      - application/json
+      description: Create a new post
+      parameters:
+      - description: CreatePostRequest
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/posts.CreatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/posts.PostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create post
+      tags:
+      - Post
+  /posts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a post by its ID (only the owner can delete)
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete post
+      tags:
+      - Post
+    get:
+      consumes:
+      - application/json
+      description: Get a post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/posts.PostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get post
+      tags:
+      - Post
+    put:
+      consumes:
+      - application/json
+      description: Update a post by its ID (only the owner can update)
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: UpdatePostRequest
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/posts.UpdatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/posts.PostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update post
+      tags:
+      - Post
+  /posts/my:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of posts created by the authenticated user
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: 'Items per page (default: 10, max: 100)'
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Search text (case-insensitive)
+        in: query
+        name: search
+        type: string
+      - description: Field to sort by (title, created_at, updated_at)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort order (asc or desc)
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httpx.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/posts.PostResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/httpx.PaginationMeta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpx.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List my posts
+      tags:
+      - Post
   /users:
     get:
       consumes:

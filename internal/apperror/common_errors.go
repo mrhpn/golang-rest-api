@@ -35,10 +35,4 @@ var (
 		"NOT_FOUND",
 		"resource not found",
 	)
-
-	ErrRequestTimeout = New(
-		RequestTimeout,
-		"REQUEST_TIMEOUT",
-		"request timeout exceeded",
-	)
 )
