@@ -49,7 +49,10 @@ func (r *repository) Create(ctx context.Context, post *Post) error {
 
 func (r *repository) FindByID(ctx context.Context, id string) (*Post, error) {
 	var post Post
-	err := r.DB(ctx).First(&post, "id = ?", id).Error
+	err := r.DB(ctx).
+		Preload("User").
+		First(&post, "id = ?", id).
+		Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -86,6 +89,7 @@ func (r *repository) FindByUserID(ctx context.Context, userID string, opts *pagi
 
 	// 2. Fetch data
 	err = r.DB(ctx).
+		Preload("User").
 		Where("user_id = ?", userID).
 		Scopes(pagination.Paginate(opts)).
 		Find(&posts).Error
@@ -120,6 +124,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 
 	// 2. Fetch data
 	err = r.DB(ctx).
+		Preload("User").
 		Scopes(pagination.Paginate(opts)).
 		Find(&posts).Error
 	if err != nil {

@@ -2,6 +2,7 @@ package posts
 
 import (
 	"github.com/mrhpn/go-rest-api/internal/model"
+	"github.com/mrhpn/go-rest-api/internal/modules/users"
 )
 
 // PostStatus represents the status of posts
@@ -21,6 +22,8 @@ type Post struct {
 	Title   string     `gorm:"not null" json:"title"`
 	Content string     `gorm:"type:text;not null" json:"content"`
 	Status  PostStatus `gorm:"type:varchar(20);not null;default:'draft';index" json:"status"`
+
+	User users.User `gorm:"foreignKey:UserID"`
 }
 
 // TableName specifies the table name for the Post model
