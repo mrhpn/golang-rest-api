@@ -31,9 +31,24 @@ var (
 		"request timeout exceeded",
 	)
 
+	// ErrForbiddenInProd indicates that this resource is only available in development environment.
 	ErrForbiddenInProd = apperror.New(
 		apperror.Forbidden,
 		"FORBIDDEN_IN_PROD",
 		"this operation is only allowed in development env",
+	)
+
+	// ErrRouteNotFound indicates that the requested route does not exist or is unavailable.
+	ErrRouteNotFound = apperror.New(
+		apperror.NotFound,
+		"ROUTE_NOT_FOUND",
+		"the requested route does not existed or is unavailable",
+	)
+
+	// ErrMethodNotAllowed indicates that the requested method does not exist for the requested route.
+	ErrMethodNotAllowed = apperror.New(
+		apperror.BadRequest,
+		"METHOD_NOT_ALLOWED",
+		"method not allowed for this route",
 	)
 )
