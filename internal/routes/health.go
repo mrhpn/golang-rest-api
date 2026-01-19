@@ -3,15 +3,10 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/modules/health"
 )
 
-func registerHealth(router *gin.Engine, api *gin.RouterGroup, appCtx *app.Context) {
-	// ----------------------- 1. Set up (Wiring) ----------------------- //
-	healthH := health.NewHandler(appCtx)
-
-	// ----------------------- 2. ROUTES ----------------------- //
+func registerHealth(router *gin.Engine, api *gin.RouterGroup, healthH *health.Handler) {
 	// Health endpoints (outside /api for Kubernetes/Docker health checks)
 	router.GET("/health", healthH.Check)
 	router.GET("/health/live", healthH.Liveness)

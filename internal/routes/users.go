@@ -9,13 +9,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
-func registerUsers(api *gin.RouterGroup, appCtx *app.Context) {
-	// ----------------------- 1. Set up (Wiring) ----------------------- //
-	userR := users.NewRepository(appCtx.DB)
-	userS := users.NewService(userR)
-	userH := users.NewHandler(userS)
-
-	// ----------------------- 2. ROUTES ----------------------- //
+func registerUsers(api *gin.RouterGroup, appCtx *app.Context, userH *users.Handler) {
 	usersGroup := api.Group("/users")
 	usersGroup.Use(mw.RequireAuth(appCtx))
 	{

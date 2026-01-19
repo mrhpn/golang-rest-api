@@ -8,11 +8,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/modules/media"
 )
 
-func registerMedia(api *gin.RouterGroup, appCtx *app.Context) {
-	// ----------------------- 1. Set up (Wiring) ----------------------- //
-	mediaH := media.NewHandler(appCtx.MediaService)
-
-	// ----------------------- 2. ROUTES ----------------------- //
+func registerMedia(api *gin.RouterGroup, appCtx *app.Context, mediaH *media.Handler) {
 	mediaGroup := api.Group("/media")
 	mediaGroup.Use(mw.RequireAuth(appCtx))
 	{

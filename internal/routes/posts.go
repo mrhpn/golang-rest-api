@@ -8,13 +8,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/modules/posts"
 )
 
-func registerPosts(api *gin.RouterGroup, appCtx *app.Context) {
-	// ----------------------- 1. Set up (Wiring) ----------------------- //
-	postR := posts.NewRepository(appCtx.DB)
-	postS := posts.NewService(postR)
-	postH := posts.NewHandler(postS)
-
-	// ----------------------- 2. ROUTES ----------------------- //
+func registerPosts(api *gin.RouterGroup, appCtx *app.Context, postH *posts.Handler) {
 	postsGroup := api.Group("/posts")
 	postsGroup.Use(mw.RequireAuth(appCtx))
 	{
