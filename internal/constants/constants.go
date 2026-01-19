@@ -2,6 +2,11 @@ package constants
 
 import "time"
 
+// Time constants
+const (
+	APIDateTimeLayout = time.RFC3339
+)
+
 // Common constants
 const (
 	KB = 1024

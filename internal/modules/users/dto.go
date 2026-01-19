@@ -1,9 +1,8 @@
 package users
 
 import (
-	"time"
-
 	"github.com/mrhpn/go-rest-api/internal/security"
+	"github.com/mrhpn/go-rest-api/internal/timex"
 )
 
 type IDParam struct {
@@ -32,7 +31,7 @@ func ToUserResponse(user *User) UserResponse {
 		Email:     user.Email,
 		Role:      user.Role,
 		Status:    user.Status,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		CreatedAt: timex.ToAPIDateTimeFormat(user.CreatedAt),
 	}
 }
 

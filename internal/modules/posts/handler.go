@@ -118,7 +118,7 @@ func (h *Handler) Get(c *gin.Context) {
 //	@Router			/posts [get]
 func (h *Handler) List(c *gin.Context) {
 	var query pagination.QueryList
-	if err := httpx.BindAndValidateURI(c, &query); err != nil {
+	if err := httpx.BindAndValidateQuery(c, &query); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -172,7 +172,7 @@ func (h *Handler) ListMyPosts(c *gin.Context) {
 	}
 
 	var query pagination.QueryList
-	if err = httpx.BindAndValidateURI(c, &query); err != nil {
+	if err = httpx.BindAndValidateQuery(c, &query); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}

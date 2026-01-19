@@ -1,6 +1,8 @@
 package posts
 
-import "time"
+import (
+	"github.com/mrhpn/go-rest-api/internal/timex"
+)
 
 type IDParam struct {
 	ID string `uri:"id" binding:"required,ulid"`
@@ -37,8 +39,8 @@ func ToPostResponse(post *Post) PostResponse {
 		Title:     post.Title,
 		Content:   post.Content,
 		Status:    post.Status,
-		CreatedAt: post.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: post.UpdatedAt.Format(time.RFC3339),
+		CreatedAt: timex.ToAPIDateTimeFormat(post.CreatedAt),
+		UpdatedAt: timex.ToAPIDateTimeFormat(post.UpdatedAt),
 	}
 }
 

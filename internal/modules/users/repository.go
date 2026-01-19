@@ -96,7 +96,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 	var users []*User
 	var total int64
 
-	// 1. Get total count using the SearchScope
+	// 1. Get total count
 	err := r.DB(ctx).Model(&User{}).
 		Scopes(pagination.SearchScope(opts)).
 		Count(&total).Error
@@ -109,7 +109,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 		)
 	}
 
-	// 2. Fetch data using the Paginate Scope
+	// 2. Fetch data
 	// If we add relationships later, don't forget to use Preload here
 	err = r.DB(ctx).
 		Scopes(pagination.Paginate(opts)).
@@ -118,7 +118,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 		return nil, 0, apperror.Wrap(
 			apperror.Internal,
 			apperror.ErrDatabaseError.Code,
-			"failed to build query",
+			"failed to find users",
 			err,
 		)
 	}
