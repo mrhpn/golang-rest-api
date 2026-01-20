@@ -43,7 +43,8 @@ const (
 
 	JWTSecretMinLength = 32
 
-	RateLimitKeyPrefix = "ratelimit:"
+	RateLimitKey       = "ratelimit"
+	RateLimitKeyPrefix = RateLimitKey + ":"
 )
 
 // Media constants

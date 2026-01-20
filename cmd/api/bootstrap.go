@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/rs/zerolog/log"
+
+	"github.com/mrhpn/go-rest-api/internal/app"
 )
 
 func runApplication() error {
@@ -36,8 +38,12 @@ func runApplication() error {
 	defer mediaCleanup()
 
 	appCtx := setupAppContext(cfg, db, redis, logger, media) // app context
-	router := setupRouter(appCtx)                            // router
-	server := setupHTTPServer(cfg, router)                   // server
+
+	// Run development-only cleanup of old rate-limit keys
+	app.CleanupOldRateLimitKeysOnStartup(appCtx)
+
+	router := setupRouter(appCtx)          // router
+	server := setupHTTPServer(cfg, router) // server
 
 	// Start server and handle shutdown
 	return gracefulShutdown(cfg, server)
