@@ -27,6 +27,6 @@ import "github.com/rs/zerolog/log"
 // @externalDocs.url			https://swagger.io/resources/open-api/
 func main() {
 	if err := runApplication(); err != nil {
-		log.Fatal().Err(err).Msg("Application failed to start")
+		log.Fatal().Err(err).Msg("💥 Application failed to start")
 	}
 }

@@ -18,6 +18,12 @@ func (r *Base) DB(ctx context.Context) *gorm.DB {
 	if tx := database.GetTx(ctx); tx != nil {
 		return tx
 	}
-	// 2. fallback to standard DB with context
+
+	// 2. fallback to standard DB w/o context
+	if ctx == nil {
+		return r.DBInstance
+	}
+
+	// 3. fallback to standard DB w/ context
 	return r.DBInstance.WithContext(ctx)
 }

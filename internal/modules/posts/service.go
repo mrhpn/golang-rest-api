@@ -10,25 +10,23 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/pagination"
 )
 
-// Service defines the business logic for managing posts.
-type Service interface {
-	Create(ctx context.Context, userID string, req CreatePostRequest) (*Post, error)
-	GetByID(ctx context.Context, id string) (*Post, error)
-	GetByUserID(ctx context.Context, userID string, opts *pagination.QueryOptions) ([]*Post, *httpx.PaginationMeta, error)
-	List(ctx context.Context, opts *pagination.QueryOptions) ([]*Post, *httpx.PaginationMeta, error)
-	Update(ctx context.Context, id string, userID string, req UpdatePostRequest) error
-	Delete(ctx context.Context, id string, userID string) error
+// Repository defines the persistence operations for post entities.
+type postRepository interface {
+	Create(ctx context.Context, post *Post) error
+	FindByID(ctx context.Context, id string) (*Post, error)
+	FindByUserID(ctx context.Context, userID string, opts *pagination.QueryOptions) ([]*Post, int64, error)
+	List(ctx context.Context, opts *pagination.QueryOptions) ([]*Post, int64, error)
+	Update(ctx context.Context, id string, updates *Post) error
+	Delete(ctx context.Context, id string) (int64, error)
 }
 
 type service struct {
-	repo Repository
+	repo postRepository
 }
 
 // NewService constructs a posts Service with the provided repository.
-func NewService(repo Repository) Service {
-	return &service{
-		repo: repo,
-	}
+func NewService(repo postRepository) PostService {
+	return &service{repo: repo}
 }
 
 func (s *service) Create(ctx context.Context, userID string, req CreatePostRequest) (*Post, error) {

@@ -45,6 +45,8 @@ const (
 
 	RateLimitKey       = "ratelimit"
 	RateLimitKeyPrefix = RateLimitKey + ":"
+
+	RefreshTokenCookieName = "refresh_token"
 )
 
 // Media constants

@@ -9,28 +9,28 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
-// Service - auth service interface
-type Service interface {
-	Login(ctx context.Context, email, password string) (*security.TokenPair, *users.User, error)
-	RefreshToken(ctx context.Context, refreshToken string) (string, error)
+type userProvider interface {
+	GetByID(ctx context.Context, id string) (*users.User, error)
+	GetByEmail(ctx context.Context, email string) (*users.User, error)
+	Activate(ctx context.Context, id string) (*users.User, error)
 }
 
 type service struct {
-	userService     users.Service
+	userProvider    userProvider
 	securityHandler *security.JWTHandler
 }
 
 // NewService - constructs Auth Service
-func NewService(userService users.Service, jwtHandler *security.JWTHandler) Service {
+func NewService(userProvider userProvider, jwtHandler *security.JWTHandler) Service {
 	return &service{
-		userService:     userService,
+		userProvider:    userProvider,
 		securityHandler: jwtHandler,
 	}
 }
 
 func (s *service) Login(ctx context.Context, email, password string) (*security.TokenPair, *users.User, error) {
 	// 1. get user from User module
-	user, err := s.userService.GetByEmail(ctx, email)
+	user, err := s.userProvider.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, nil, errInvalidCrendentials
 	}
@@ -46,13 +46,7 @@ func (s *service) Login(ctx context.Context, email, password string) (*security.
 	}
 
 	// 4. update user status to active on successful login
-	if err = s.userService.Activate(ctx, user.ID); err != nil {
-		return nil, nil, err
-	}
-
-	// 5. refresh user data to get updated status
-	user, err = s.userService.GetByID(ctx, user.ID)
-	if err != nil {
+	if user, err = s.userProvider.Activate(ctx, user.ID); err != nil {
 		return nil, nil, err
 	}
 
@@ -73,7 +67,7 @@ func (s *service) RefreshToken(ctx context.Context, refreshToken string) (string
 	}
 
 	// 2. hit the db: ensure the user still exists and isn't blocked
-	user, err := s.userService.GetByID(ctx, claims.UserID)
+	user, err := s.userProvider.GetByID(ctx, claims.UserID)
 	if err != nil {
 		return "", security.ErrInvalidToken
 	}

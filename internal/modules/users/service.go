@@ -12,25 +12,25 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
-// Service defines the business logic for managing users.
-type Service interface {
-	Create(ctx context.Context, req CreateUserRequest) (*User, error)
-	GetByID(ctx context.Context, id string) (*User, error)
-	GetByEmail(ctx context.Context, email string) (*User, error)
-	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, *httpx.PaginationMeta, error)
-	Delete(ctx context.Context, id string) error
-	Restore(ctx context.Context, id string) error
-	Block(ctx context.Context, id string) error
-	Reactivate(ctx context.Context, id string) error
-	Activate(ctx context.Context, id string) error
+// userRepository interface defines the methods required for user data persistence.
+type userRepository interface {
+	Create(ctx context.Context, user *User) error
+	FindByID(ctx context.Context, id string) (*User, error)
+	FindByEmail(ctx context.Context, email string) (*User, error)
+	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, int64, error)
+	Delete(ctx context.Context, id string) (int64, error)
+	Restore(ctx context.Context, id string) (int64, error)
+	Block(ctx context.Context, id string) (int64, error)
+	Reactivate(ctx context.Context, id string) (int64, error)
+	Activate(ctx context.Context, id string) (*User, error)
 }
 
 type service struct {
-	repo Repository
+	repo userRepository
 }
 
 // NewService constructs a users Service with the provided repository.
-func NewService(repo Repository) Service {
+func NewService(repo userRepository) Service {
 	return &service{repo: repo}
 }
 
@@ -155,16 +155,12 @@ func (s *service) Reactivate(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *service) Activate(ctx context.Context, id string) error {
-	affected, err := s.repo.Activate(ctx, id)
+func (s *service) Activate(ctx context.Context, id string) (*User, error) {
+	user, err := s.repo.Activate(ctx, id)
 	if err != nil {
-		return err
-	}
-
-	if affected == 0 {
-		return errUserNotFound
+		return nil, err
 	}
 
 	log.Ctx(ctx).Info().Str("user_id", id).Msg("user activated")
-	return nil
+	return user, nil
 }

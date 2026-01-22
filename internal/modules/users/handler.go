@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,14 +10,26 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/pagination"
 )
 
+type Service interface {
+	Create(ctx context.Context, req CreateUserRequest) (*User, error)
+	GetByID(ctx context.Context, id string) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, *httpx.PaginationMeta, error)
+	Delete(ctx context.Context, id string) error
+	Restore(ctx context.Context, id string) error
+	Block(ctx context.Context, id string) error
+	Reactivate(ctx context.Context, id string) error
+	Activate(ctx context.Context, id string) (*User, error)
+}
+
 // Handler handles user-related HTTP endpoints such as user profile access and account management operations.
 type Handler struct {
-	userService Service
+	service Service
 }
 
 // NewHandler constructs a users Handler with its required service dependency.
-func NewHandler(userService Service) *Handler {
-	return &Handler{userService: userService}
+func NewHandler(service Service) *Handler {
+	return &Handler{service: service}
 }
 
 // Create user godoc
@@ -40,7 +53,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Create(httpx.ReqCtx(c), req)
+	user, err := h.service.Create(httpx.ReqCtx(c), req)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -74,7 +87,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetByID(httpx.ReqCtx(c), params.ID)
+	user, err := h.service.GetByID(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -122,7 +135,7 @@ func (h *Handler) List(c *gin.Context) {
 		},
 	)
 
-	users, meta, err := h.userService.List(httpx.ReqCtx(c), opts)
+	users, meta, err := h.service.List(httpx.ReqCtx(c), opts)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -157,7 +170,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Delete(httpx.ReqCtx(c), params.ID); err != nil {
+	if err := h.service.Delete(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -186,7 +199,7 @@ func (h *Handler) Restore(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Restore(httpx.ReqCtx(c), params.ID); err != nil {
+	if err := h.service.Restore(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
@@ -215,12 +228,12 @@ func (h *Handler) Block(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Block(httpx.ReqCtx(c), params.ID); err != nil {
+	if err := h.service.Block(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
-	user, err := h.userService.GetByID(httpx.ReqCtx(c), params.ID)
+	user, err := h.service.GetByID(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -250,12 +263,12 @@ func (h *Handler) Reactivate(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.Reactivate(httpx.ReqCtx(c), params.ID); err != nil {
+	if err := h.service.Reactivate(httpx.ReqCtx(c), params.ID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
-	user, err := h.userService.GetByID(httpx.ReqCtx(c), params.ID)
+	user, err := h.service.GetByID(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return

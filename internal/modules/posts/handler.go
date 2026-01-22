@@ -1,6 +1,7 @@
 package posts
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,16 +11,24 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/pagination"
 )
 
+// PostService defines the business logic for managing posts.
+type PostService interface {
+	Create(ctx context.Context, userID string, req CreatePostRequest) (*Post, error)
+	GetByID(ctx context.Context, id string) (*Post, error)
+	GetByUserID(ctx context.Context, userID string, opts *pagination.QueryOptions) ([]*Post, *httpx.PaginationMeta, error)
+	List(ctx context.Context, opts *pagination.QueryOptions) ([]*Post, *httpx.PaginationMeta, error)
+	Update(ctx context.Context, id string, userID string, req UpdatePostRequest) error
+	Delete(ctx context.Context, id string, userID string) error
+}
+
 // Handler handles post-related HTTP endpoints such as post creation, reading, updating, and deletion.
 type Handler struct {
-	postService Service
+	service PostService
 }
 
 // NewHandler constructs a posts Handler with its required service dependency.
-func NewHandler(postService Service) *Handler {
-	return &Handler{
-		postService: postService,
-	}
+func NewHandler(service PostService) *Handler {
+	return &Handler{service: service}
 }
 
 // Create post godoc
@@ -50,7 +59,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	post, err := h.postService.Create(httpx.ReqCtx(c), user.UserID, req)
+	post, err := h.service.Create(httpx.ReqCtx(c), user.UserID, req)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -85,7 +94,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	post, err := h.postService.GetByID(httpx.ReqCtx(c), params.ID)
+	post, err := h.service.GetByID(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -131,7 +140,7 @@ func (h *Handler) List(c *gin.Context) {
 		},
 	)
 
-	posts, meta, err := h.postService.List(httpx.ReqCtx(c), opts)
+	posts, meta, err := h.service.List(httpx.ReqCtx(c), opts)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -185,7 +194,7 @@ func (h *Handler) ListMyPosts(c *gin.Context) {
 		},
 	)
 
-	posts, meta, err := h.postService.GetByUserID(httpx.ReqCtx(c), user.UserID, opts)
+	posts, meta, err := h.service.GetByUserID(httpx.ReqCtx(c), user.UserID, opts)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -236,13 +245,13 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	if err = h.postService.Update(httpx.ReqCtx(c), params.ID, user.UserID, req); err != nil {
+	if err = h.service.Update(httpx.ReqCtx(c), params.ID, user.UserID, req); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}
 
 	// Fetch updated post
-	post, err := h.postService.GetByID(httpx.ReqCtx(c), params.ID)
+	post, err := h.service.GetByID(httpx.ReqCtx(c), params.ID)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -281,7 +290,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.postService.Delete(httpx.ReqCtx(c), params.ID, user.UserID); err != nil {
+	if err = h.service.Delete(httpx.ReqCtx(c), params.ID, user.UserID); err != nil {
 		httpx.FailWithError(c, err)
 		return
 	}

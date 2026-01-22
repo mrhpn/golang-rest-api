@@ -11,30 +11,20 @@ import (
 	repo "github.com/mrhpn/go-rest-api/internal/repository"
 )
 
-// Repository defines the persistence operations for post entities.
-type Repository interface {
-	Create(ctx context.Context, post *Post) error
-	FindByID(ctx context.Context, id string) (*Post, error)
-	FindByUserID(ctx context.Context, userID string, opts *pagination.QueryOptions) ([]*Post, int64, error)
-	List(ctx context.Context, opts *pagination.QueryOptions) ([]*Post, int64, error)
-	Update(ctx context.Context, id string, updates *Post) error
-	Delete(ctx context.Context, id string) (int64, error)
-}
-
-type repository struct {
+type Repository struct {
 	repo.Base
 }
 
 // NewRepository constructs a posts Repository backed by a GORM database.
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{
 		Base: repo.Base{
 			DBInstance: db,
 		},
 	}
 }
 
-func (r *repository) Create(ctx context.Context, post *Post) error {
+func (r *Repository) Create(ctx context.Context, post *Post) error {
 	err := r.DB(ctx).Create(post).Error
 	if err != nil {
 		return apperror.Wrap(
@@ -47,7 +37,7 @@ func (r *repository) Create(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (r *repository) FindByID(ctx context.Context, id string) (*Post, error) {
+func (r *Repository) FindByID(ctx context.Context, id string) (*Post, error) {
 	var post Post
 	err := r.DB(ctx).
 		Preload("User").
@@ -69,7 +59,7 @@ func (r *repository) FindByID(ctx context.Context, id string) (*Post, error) {
 	return &post, nil
 }
 
-func (r *repository) FindByUserID(ctx context.Context, userID string, opts *pagination.QueryOptions) ([]*Post, int64, error) {
+func (r *Repository) FindByUserID(ctx context.Context, userID string, opts *pagination.QueryOptions) ([]*Post, int64, error) {
 	var posts []*Post
 	var total int64
 
@@ -105,7 +95,7 @@ func (r *repository) FindByUserID(ctx context.Context, userID string, opts *pagi
 	return posts, total, nil
 }
 
-func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([]*Post, int64, error) {
+func (r *Repository) List(ctx context.Context, opts *pagination.QueryOptions) ([]*Post, int64, error) {
 	var posts []*Post
 	var total int64
 
@@ -139,7 +129,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 	return posts, total, nil
 }
 
-func (r *repository) Update(ctx context.Context, id string, updates *Post) error {
+func (r *Repository) Update(ctx context.Context, id string, updates *Post) error {
 	result := r.DB(ctx).
 		Model(&Post{}).
 		Where("id = ?", id).
@@ -161,7 +151,7 @@ func (r *repository) Update(ctx context.Context, id string, updates *Post) error
 	return nil
 }
 
-func (r *repository) Delete(ctx context.Context, id string) (int64, error) {
+func (r *Repository) Delete(ctx context.Context, id string) (int64, error) {
 	result := r.DB(ctx).Delete(&Post{}, "id = ?", id)
 	if result.Error != nil {
 		return 0, apperror.Wrap(

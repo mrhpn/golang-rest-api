@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -8,21 +9,27 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/app"
 	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
+	"github.com/mrhpn/go-rest-api/internal/modules/users"
+	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
-const refreshTokenCookieName = "refresh_token"
+// Service defines the business logic for authentication operations.
+type Service interface {
+	Login(ctx context.Context, email, password string) (*security.TokenPair, *users.User, error)
+	RefreshToken(ctx context.Context, refreshToken string) (string, error)
+}
 
 // Handler handles authentication-related HTTP endpoints such as login, token refresh, and access control–protected actions.
 type Handler struct {
-	authService Service
-	appCtx      *app.Context
+	service Service
+	appCtx  *app.Context
 }
 
 // NewHandler constructs an authentication Handler with its required dependencies
 func NewHandler(authService Service, appCtx *app.Context) *Handler {
 	return &Handler{
-		authService: authService,
-		appCtx:      appCtx,
+		service: authService,
+		appCtx:  appCtx,
 	}
 }
 
@@ -46,7 +53,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	tokenPair, user, err := h.authService.Login(httpx.ReqCtx(c), req.Email, req.Password)
+	tokenPair, user, err := h.service.Login(httpx.ReqCtx(c), req.Email, req.Password)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return
@@ -55,7 +62,7 @@ func (h *Handler) Login(c *gin.Context) {
 	// set refresh token in cookie
 	cookieMaxAge := h.appCtx.Cfg.JWT.RefreshTokenExpirationSecond
 	c.SetCookie(
-		refreshTokenCookieName,                  // name
+		constants.RefreshTokenCookieName,        // name
 		tokenPair.RefreshToken,                  // value
 		cookieMaxAge,                            // max age
 		"/",                                     // path
@@ -81,7 +88,7 @@ func (h *Handler) Login(c *gin.Context) {
 //	@Router			/auth/refresh [post]
 func (h *Handler) Refresh(c *gin.Context) {
 	// read form cookie instead of json body
-	refreshToken, err := c.Cookie(refreshTokenCookieName)
+	refreshToken, err := c.Cookie(constants.RefreshTokenCookieName)
 	if err != nil {
 		httpx.Fail(
 			c,
@@ -93,7 +100,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	newAccessToken, err := h.authService.RefreshToken(httpx.ReqCtx(c), refreshToken)
+	newAccessToken, err := h.service.RefreshToken(httpx.ReqCtx(c), refreshToken)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return

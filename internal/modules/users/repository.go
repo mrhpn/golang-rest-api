@@ -12,33 +12,20 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/security"
 )
 
-// Repository defines the persistence operations for user entities.
-type Repository interface {
-	Create(ctx context.Context, user *User) error
-	FindByID(ctx context.Context, id string) (*User, error)
-	FindByEmail(ctx context.Context, email string) (*User, error)
-	List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, int64, error)
-	Delete(ctx context.Context, id string) (int64, error)
-	Restore(ctx context.Context, id string) (int64, error)
-	Block(ctx context.Context, id string) (int64, error)
-	Reactivate(ctx context.Context, id string) (int64, error)
-	Activate(ctx context.Context, id string) (int64, error)
-}
-
-type repository struct {
+type Repository struct {
 	repo.Base
 }
 
 // NewRepository constructs a users Repository backed by a GORM database.
-func NewRepository(db *gorm.DB) Repository {
-	return &repository{
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{
 		Base: repo.Base{
 			DBInstance: db,
 		},
 	}
 }
 
-func (r *repository) Create(ctx context.Context, user *User) error {
+func (r *Repository) Create(ctx context.Context, user *User) error {
 	err := r.DB(ctx).Create(user).Error
 	if err != nil {
 		// Wrap database errors to preserve context while maintaining client-safe messages
@@ -52,7 +39,7 @@ func (r *repository) Create(ctx context.Context, user *User) error {
 	return nil
 }
 
-func (r *repository) FindByID(ctx context.Context, id string) (*User, error) {
+func (r *Repository) FindByID(ctx context.Context, id string) (*User, error) {
 	var user User
 	err := r.DB(ctx).First(&user, "id = ?", id).Error
 
@@ -72,7 +59,7 @@ func (r *repository) FindByID(ctx context.Context, id string) (*User, error) {
 	return &user, nil
 }
 
-func (r *repository) FindByEmail(ctx context.Context, email string) (*User, error) {
+func (r *Repository) FindByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
 	err := r.DB(ctx).Where("email = ?", email).First(&user).Error
 
@@ -92,7 +79,7 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*User, erro
 	return &user, nil
 }
 
-func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, int64, error) {
+func (r *Repository) List(ctx context.Context, opts *pagination.QueryOptions) ([]*User, int64, error) {
 	var users []*User
 	var total int64
 
@@ -126,7 +113,7 @@ func (r *repository) List(ctx context.Context, opts *pagination.QueryOptions) ([
 	return users, total, nil
 }
 
-func (r *repository) Delete(ctx context.Context, id string) (int64, error) {
+func (r *Repository) Delete(ctx context.Context, id string) (int64, error) {
 	result := r.DB(ctx).Delete(&User{}, "id = ?", id)
 	if result.Error != nil {
 		return 0, apperror.Wrap(
@@ -139,7 +126,7 @@ func (r *repository) Delete(ctx context.Context, id string) (int64, error) {
 	return result.RowsAffected, nil
 }
 
-func (r *repository) Restore(ctx context.Context, id string) (int64, error) {
+func (r *Repository) Restore(ctx context.Context, id string) (int64, error) {
 	result := r.DB(ctx).
 		Unscoped().
 		Model(&User{}).
@@ -158,7 +145,7 @@ func (r *repository) Restore(ctx context.Context, id string) (int64, error) {
 	return result.RowsAffected, nil
 }
 
-func (r *repository) Block(ctx context.Context, id string) (int64, error) {
+func (r *Repository) Block(ctx context.Context, id string) (int64, error) {
 	result := r.DB(ctx).
 		Model(&User{}).
 		Where("id = ?", id).
@@ -176,7 +163,7 @@ func (r *repository) Block(ctx context.Context, id string) (int64, error) {
 	return result.RowsAffected, nil
 }
 
-func (r *repository) Reactivate(ctx context.Context, id string) (int64, error) {
+func (r *Repository) Reactivate(ctx context.Context, id string) (int64, error) {
 	result := r.DB(ctx).
 		Model(&User{}).
 		Where("id = ?", id).
@@ -194,20 +181,31 @@ func (r *repository) Reactivate(ctx context.Context, id string) (int64, error) {
 	return result.RowsAffected, nil
 }
 
-func (r *repository) Activate(ctx context.Context, id string) (int64, error) {
-	result := r.DB(ctx).
-		Model(&User{}).
-		Where("id = ?", id).
-		Update("status", security.UserStatusActive)
+func (r *Repository) Activate(ctx context.Context, id string) (*User, error) {
+	var user User
 
-	if result.Error != nil {
-		return 0, apperror.Wrap(
+	// 1. Find the user first to ensure they exist
+	if err := r.DB(ctx).First(&user, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errUserNotFound
+		}
+		return nil, apperror.Wrap(
 			apperror.Internal,
 			apperror.ErrDatabaseError.Code,
-			"failed to activate user",
-			result.Error,
+			"failed to find user",
+			err,
 		)
 	}
 
-	return result.RowsAffected, nil
+	// 2. Update the status
+	if err := r.DB(ctx).Model(&user).Update("status", security.UserStatusActive).Error; err != nil {
+		return nil, apperror.Wrap(
+			apperror.Internal,
+			apperror.ErrDatabaseError.Code,
+			"failed to activate user",
+			err,
+		)
+	}
+
+	return &user, nil
 }
