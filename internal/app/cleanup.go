@@ -50,6 +50,6 @@ func CleanupOldRateLimitKeysOnStartup(ctx *Context) {
 	if total > 0 {
 		log.Info().Int("count", total).Msg("Cleaned up old rate limit keys on startup")
 	} else {
-		log.Info().Msg("🙌 No old rate limit keys deleted")
+		log.Info().Msg("🙌 Redis — No old rate limit keys deleted")
 	}
 }

@@ -25,7 +25,7 @@ func setupRedis(cfg *config.Config) (*redis.Client, func(), error) {
 		Str("host", cfg.Redis.Host).
 		Str("port", cfg.Redis.Port).
 		Bool("enabled", cfg.Redis.Enabled).
-		Msg("✅ Redis connected successfully")
+		Msg("✅ Redis — connected successfully")
 
 	cleanup := func() {
 		if closeErr := client.Close(); closeErr != nil {

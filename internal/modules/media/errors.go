@@ -10,10 +10,10 @@ var (
 	)
 
 	// error if none of these: image, video, doc
-	errInvalidFileTypeCategory = apperror.New(
+	errInvalidFileType = apperror.New(
 		apperror.BadRequest,
-		"INVALID_FILE_TYPE_CATEGORY",
-		"invalid file type category",
+		"INVALID_FILE_TYPE",
+		"invalid file type",
 	)
 
 	errInvalidFile = apperror.New(

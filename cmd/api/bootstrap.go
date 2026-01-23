@@ -29,15 +29,15 @@ func runApplication() error {
 	}
 	defer redisCleanup()
 
-	// Setup media storage (minio)
-	media, mediaCleanup, mediaErr := setupMedia(cfg)
+	// Setup mediaSvc storage (minio)
+	mediaSvc, mediaCleanup, mediaErr := setupMedia(cfg)
 	if mediaErr != nil {
 		log.Error().Err(mediaErr).Msg("media setup failed")
 		return mediaErr
 	}
 	defer mediaCleanup()
 
-	appCtx := setupAppContext(cfg, db, redis, logger, media) // app context
+	appCtx := setupAppContext(cfg, db, redis, logger, mediaSvc) // app context
 
 	// Run development-only cleanup of old rate-limit keys
 	app.CleanupOldRateLimitKeysOnStartup(appCtx)

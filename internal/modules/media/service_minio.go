@@ -10,15 +10,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/constants"
 )
 
 const healthCheckTimeout = 5 * time.Second
-const bucketCreateTimeout = 10 * time.Second
 
 // minioService implements the Service interface using MinIO as the underlying object storage backend.
 type minioService struct {
@@ -27,53 +24,11 @@ type minioService struct {
 }
 
 // NewMinioService initializes a MinIO-backed media service with the provided connection credentials and bucket configuration.
-func NewMinioService(host, accessKey, secretKey, bucketName string, useSSL bool) (Service, error) {
-	client, err := minio.New(host, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: useSSL,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize minio client: %w", err)
-	}
-
-	log.Info().Msg("✅ MinIO connected successfully")
-
-	// 1. auto-create bucket if it doesn't exist
-	ctx, cancel := context.WithTimeout(context.Background(), bucketCreateTimeout)
-	defer cancel()
-
-	exists, err := client.BucketExists(ctx, bucketName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check if minio bucket exists: %w", err)
-	}
-
-	if !exists {
-		err = client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create bucket: %w", err)
-		}
-
-		// 2. set public policy so images can be viewed in browser via direct lin[k
-		policy := fmt.Sprintf(`{
-			"Version": "2012-10-17",
-			"Statement": [{
-					"Action": ["s3:GetObject"],
-					"Effect":"Allow",
-					"Principal":"*",
-					"Resource":["arn:aws:s3:::%s/*"]
-				}]
-			}`, bucketName)
-
-		err = client.SetBucketPolicy(ctx, bucketName, policy)
-		if err != nil {
-			return nil, fmt.Errorf("failed to set bucket policy: %w", err)
-		}
-	}
-
+func NewMinioService(client *minio.Client, bucketName string) Service {
 	return &minioService{
 		client:     client,
 		bucketName: bucketName,
-	}, nil
+	}
 }
 
 // Upload streams the file to MinIO and returns the path
@@ -98,30 +53,37 @@ func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, s
 	// 2. define processing rules based on directory
 	var opts *imageOptions
 	switch subDir {
-	case fileCategoryProfiles:
+	case fileCategoryProfile:
 		opts = &imageOptions{
 			MaxWidth:  constants.MaxProfileImageWidth,
 			MaxHeight: constants.MaxProfileImageHeight,
 			Quality:   constants.MaxProfileImageQuality,
 		}
-	case fileCategoryThumbnails:
+	case fileCategoryThumbnail:
 		opts = &imageOptions{
 			MaxWidth:  constants.MaxThumbnailImageWidth,
 			MaxHeight: constants.MaxThumbnailImageHeight,
 			Quality:   constants.MaxThumbnailImageQuality,
 		}
+	default:
+		// no processing
 	}
 
 	// 3. apply processing if options were found
 	if opts != nil {
 		processed, newSize, pErr := processImage(src, *opts) // 116
-		if pErr == nil {
-			reader = processed
-			size = newSize
-			contentType = "image/jpeg"
-			ext = ".jpg"
+		if pErr != nil {
+			return "", apperror.Wrap(
+				apperror.BadRequest,
+				errInvalidFile.Code,
+				errInvalidFile.Message,
+				pErr,
+			)
 		}
-		// Note: If image processing fails, we continue with the original file
+		reader = processed
+		size = newSize
+		contentType = "image/jpeg"
+		ext = ".jpg"
 	}
 
 	// 4. construct the obj name

@@ -1,71 +1,32 @@
 package media
 
 import (
+	"context"
+	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/mrhpn/go-rest-api/internal/constants"
 	"github.com/mrhpn/go-rest-api/internal/httpx"
 )
 
-type fileType string
-type fileCategory string
-
-const (
-	fileCategoryProfiles   fileCategory = "profiles"
-	fileCategoryThumbnails fileCategory = "thumbnails"
-)
-
-const (
-	fileTypeImage fileType = "image"
-	fileTypeVideo fileType = "video"
-	fileTypeDoc   fileType = "document"
-)
-
-type filePolicy struct {
-	AllowedExtensions map[string]bool
-	MaxSize           int64
+type mediaService interface {
+	Upload(ctx context.Context, file *multipart.FileHeader, subDir fileCategory) (string, error)
 }
 
 // Handler handles media-related HTTP endpoints such as uploads, retrieval, and media management operations.
 type Handler struct {
-	mediaService Service
-	policies     map[fileType]filePolicy
+	service  mediaService
+	policies map[fileType]filePolicy
 }
 
 // NewHandler constructs a media Handler with its required service dependency.
-func NewHandler(mediaService Service) *Handler {
+func NewHandler(service mediaService) *Handler {
 	return &Handler{
-		mediaService: mediaService,
-		policies: map[fileType]filePolicy{
-			fileTypeImage: {
-				AllowedExtensions: map[string]bool{
-					".jpg":  true,
-					".jpeg": true,
-					".png":  true,
-				},
-				MaxSize: constants.MaxImageSize,
-			},
-			fileTypeVideo: {
-				AllowedExtensions: map[string]bool{
-					".mp4": true,
-					".mov": true,
-					".avi": true,
-				},
-				MaxSize: constants.MaxVideoSize,
-			},
-			fileTypeDoc: {
-				AllowedExtensions: map[string]bool{
-					".pdf":  true,
-					".docx": true,
-					".txt":  true,
-				},
-				MaxSize: constants.MaxDocumentSize,
-			},
-		},
+		service:  service,
+		policies: getDefaultPolicies(),
 	}
 }
 
@@ -82,14 +43,14 @@ func NewHandler(mediaService Service) *Handler {
 //	@Security		BearerAuth
 //	@Router			/media/upload/profile [post]
 func (h *Handler) UploadProfilePicture(c *gin.Context) {
-	h.handleUpload(c, fileCategoryProfiles, fileTypeImage)
+	h.handleUpload(c, fileCategoryProfile, fileTypeImage)
 }
 
-func (h *Handler) handleUpload(c *gin.Context, subDir fileCategory, category fileType) {
+func (h *Handler) handleUpload(c *gin.Context, subDir fileCategory, fileType fileType) {
 	// 1. get policy for type
-	policy, exists := h.policies[category]
+	policy, exists := h.policies[fileType]
 	if !exists {
-		httpx.FailWithError(c, errInvalidFileTypeCategory)
+		httpx.FailWithError(c, errInvalidFileType)
 		return
 	}
 
@@ -126,7 +87,7 @@ func (h *Handler) handleUpload(c *gin.Context, subDir fileCategory, category fil
 	}
 
 	// 7. upload
-	url, err := h.mediaService.Upload(httpx.ReqCtx(c), file, subDir)
+	url, err := h.service.Upload(httpx.ReqCtx(c), file, subDir)
 	if err != nil {
 		httpx.FailWithError(c, err)
 		return

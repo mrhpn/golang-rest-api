@@ -10,16 +10,18 @@ import (
 )
 
 func setupMedia(cfg *config.Config) (media.Service, func(), error) {
-	svc, err := media.NewMinioService(
-		cfg.Storage.Host,
-		cfg.Storage.AccessKey,
-		cfg.Storage.SecretKey,
-		cfg.Storage.BucketName,
-		cfg.Storage.UseSSL,
-	)
+	client, err := media.SetupMinio(media.MinioConfig{
+		Host:      cfg.Storage.Host,
+		AccessKey: cfg.Storage.AccessKey,
+		SecretKey: cfg.Storage.SecretKey,
+		Bucket:    cfg.Storage.BucketName,
+		UseSSL:    cfg.Storage.UseSSL,
+	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to setup media service: %w", err)
 	}
+
+	svc := media.NewMinioService(client, cfg.Storage.BucketName)
 
 	cleanup := func() {
 		log.Info().

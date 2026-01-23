@@ -167,7 +167,7 @@ func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 		Int("max_idle_conns", maxIdleConns).
 		Dur("conn_max_lifetime", connMaxLifetime).
 		Dur("conn_max_idle_time", connMaxIdleTime).
-		Msg("✅ Database connected successfully")
+		Msg("✅ Database — connected successfully")
 
 	// Register callback to automatically apply query timeout to all queries
 	registerQueryTimeoutCallback(db, dbCfg)
