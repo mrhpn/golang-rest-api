@@ -90,7 +90,7 @@ const (
 	DBMaxLifetimeMinute            = 60
 	DBConnMaxIdleTimeMinute        = 30
 	DBPoolMetricsEnabled           = true
-	DBPoolMetricsLogIntervalSecond = 30
+	DBPoolMetricsLogIntervalSecond = 60
 )
 
 // Redis constants

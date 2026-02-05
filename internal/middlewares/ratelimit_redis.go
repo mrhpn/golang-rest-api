@@ -82,8 +82,8 @@ func createRateLimitHandler(ctx *app.Context, rateStr string) gin.HandlerFunc {
 		if c.Writer.Status() == http.StatusTooManyRequests {
 			// Get rate limit info from headers (ulule/limiter sets these)
 			key := c.ClientIP()
-			limit := c.GetHeader("X-RateLimit-Limit")
-			reset := c.GetHeader("X-RateLimit-Reset")
+			limit := c.Writer.Header().Get("X-RateLimit-Limit")
+			reset := c.Writer.Header().Get("X-RateLimit-Reset")
 
 			log.Ctx(httpx.ReqCtx(c)).Warn().
 				Str("ip", key).
@@ -104,8 +104,6 @@ func createRateLimitHandler(ctx *app.Context, rateStr string) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
-		c.Next()
 	}
 }
 

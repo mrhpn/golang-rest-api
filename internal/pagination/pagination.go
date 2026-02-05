@@ -131,6 +131,10 @@ func applySearch(db *gorm.DB, opts *QueryOptions) *gorm.DB {
 	if len(cols) == 0 {
 		return db
 	}
+	cols = filterAllowedColumns(cols, opts.SearchableColumns)
+	if len(cols) == 0 {
+		return db
+	}
 
 	sanitizedSearch := sanitizeSearchInput(opts.Search)
 
@@ -147,6 +151,24 @@ func applySearch(db *gorm.DB, opts *QueryOptions) *gorm.DB {
 		}
 	}
 	return db.Where(strings.Join(conditions, " OR "), args...)
+}
+
+func filterAllowedColumns(requested []string, allowed []string) []string {
+	if len(allowed) == 0 {
+		return nil
+	}
+	allowedSet := make(map[string]struct{}, len(allowed))
+	for _, col := range allowed {
+		allowedSet[stringx.ToSnakeCase(col)] = struct{}{}
+	}
+	filtered := make([]string, 0, len(requested))
+	for _, col := range requested {
+		normalized := stringx.ToSnakeCase(col)
+		if _, ok := allowedSet[normalized]; ok {
+			filtered = append(filtered, normalized)
+		}
+	}
+	return filtered
 }
 
 // BuildMeta creates pagination metadata from page, limit, and total count

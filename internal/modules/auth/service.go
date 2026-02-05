@@ -63,7 +63,7 @@ func (s *service) RefreshToken(ctx context.Context, refreshToken string) (string
 	// 1. validate the signature and expiry of the refresh token
 	claims, err := s.securityHandler.ValidateToken(refreshToken)
 	if err != nil {
-		return "", security.ErrExpiredToken
+		return "", err
 	}
 
 	// 2. hit the db: ensure the user still exists and isn't blocked
@@ -78,10 +78,10 @@ func (s *service) RefreshToken(ctx context.Context, refreshToken string) (string
 	}
 
 	// 4. generate ONLY a new access token
-	tokens, err := s.securityHandler.GenerateTokenPair(user.ID, user.Role)
+	accessToken, err := s.securityHandler.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
 		return "", errTokenGeneration
 	}
 
-	return tokens.AccessToken, nil
+	return accessToken, nil
 }

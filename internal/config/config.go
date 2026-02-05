@@ -2,6 +2,8 @@
 package config
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -86,9 +88,9 @@ type MinioConfig struct {
 	UseSSL     bool
 }
 
-// MustLoad loads the application configuration from environment variables.
-// It panics if any required configuration is missing.
-func MustLoad() *Config {
+// Load loads the application configuration from environment variables.
+// It returns an error if any required configuration is missing.
+func Load() (*Config, error) {
 	originsRaw := getEnv("ALLOWED_ORIGINS", "*")
 	var allowedOrigins []string
 	if originsRaw == "*" {
@@ -161,16 +163,16 @@ func MustLoad() *Config {
 	}
 
 	if cfg.DBURL == "" {
-		panic("env: DATABASE_URL is missing")
+		return nil, errors.New("env: DATABASE_URL is missing")
 	}
 	if cfg.JWT.Secret == "" || len(cfg.JWT.Secret) < constants.JWTSecretMinLength {
-		panic("env: JWT_SECRET is missing or less than " + strconv.Itoa(constants.JWTSecretMinLength) + " characters")
+		return nil, fmt.Errorf("env: JWT_SECRET is missing or less than %d characters", constants.JWTSecretMinLength)
 	}
 	if cfg.Storage.Host == "" {
-		panic("env: STORAGE_HOST is missing")
+		return nil, errors.New("env: STORAGE_HOST is missing")
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 func getEnv(key, fallback string) string {

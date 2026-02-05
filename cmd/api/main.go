@@ -1,7 +1,9 @@
 // Package main is entry point of the entire application
 package main
 
-import "github.com/rs/zerolog/log"
+import (
+	"os"
+)
 
 //	@title			Go REST API
 //	@version		1.0
@@ -27,6 +29,6 @@ import "github.com/rs/zerolog/log"
 // @externalDocs.url			https://swagger.io/resources/open-api/
 func main() {
 	if err := runApplication(); err != nil {
-		log.Fatal().Err(err).Msg("💥 Application failed to start")
+		os.Exit(1)
 	}
 }

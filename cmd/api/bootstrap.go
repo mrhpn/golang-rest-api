@@ -4,11 +4,16 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/app"
+	"github.com/mrhpn/go-rest-api/internal/constants"
 )
 
 func runApplication() error {
 	// Setup config
-	cfg := setupConfig()
+	cfg, cfgErr := setupConfig()
+	if cfgErr != nil {
+		log.Error().Err(cfgErr).Msg("config setup failed")
+		return cfgErr
+	}
 
 	// Setup logger
 	logger := setupLogger(cfg)
@@ -40,7 +45,9 @@ func runApplication() error {
 	appCtx := setupAppContext(cfg, db, redis, logger, mediaSvc) // app context
 
 	// Run development-only cleanup of old rate-limit keys
-	app.CleanupOldRateLimitKeysOnStartup(appCtx)
+	if cfg.AppEnv == constants.EnvDev {
+		app.CleanupOldRateLimitKeysOnStartup(appCtx)
+	}
 
 	router := setupRouter(appCtx)          // router
 	server := setupHTTPServer(cfg, router) // server

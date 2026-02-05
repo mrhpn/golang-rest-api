@@ -54,6 +54,11 @@ func (h *JWTHandler) GenerateTokenPair(userID string, role Role) (*TokenPair, er
 	}, nil
 }
 
+// GenerateAccessToken generates access token only.
+func (h *JWTHandler) GenerateAccessToken(userID string, role Role) (string, error) {
+	return h.signToken(userID, role, h.accessExpiry)
+}
+
 // private: sign token
 func (h *JWTHandler) signToken(userID string, role Role, expiry time.Duration) (string, error) {
 	claims := UserClaims{

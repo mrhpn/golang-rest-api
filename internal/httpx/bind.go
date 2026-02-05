@@ -25,7 +25,7 @@ func BindAndValidateURI(c *gin.Context, req any) error {
 		return apperror.New(
 			apperror.InvalidInput,
 			"INVALID_URI",
-			"invalid recource id",
+			"invalid resource id",
 		)
 	}
 	return nil

@@ -28,8 +28,8 @@ var (
 	// ErrInvalidCrendentials indicates that the provided authentication credentials are invalid.
 	errInvalidCrendentials = apperror.New(
 		apperror.Unauthorized,
-		"INVALID_CRENDENTIALS",
-		"invalid crendentials",
+		"INVALID_CREDENTIALS",
+		"invalid credentials",
 	)
 
 	// ErrTokenGeneration indicates a failure during access or refresh token generation.

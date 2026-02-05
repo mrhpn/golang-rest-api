@@ -6,7 +6,7 @@ import (
 	"github.com/mrhpn/go-rest-api/internal/config"
 )
 
-func setupConfig() *config.Config {
+func setupConfig() (*config.Config, error) {
 	_ = godotenv.Load()
-	return config.MustLoad()
+	return config.Load()
 }

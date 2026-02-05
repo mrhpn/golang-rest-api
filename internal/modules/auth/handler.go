@@ -61,6 +61,7 @@ func (h *Handler) Login(c *gin.Context) {
 
 	// set refresh token in cookie
 	cookieMaxAge := h.appCtx.Cfg.JWT.RefreshTokenExpirationSecond
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		constants.RefreshTokenCookieName,        // name
 		tokenPair.RefreshToken,                  // value
