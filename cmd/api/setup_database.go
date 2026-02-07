@@ -16,8 +16,8 @@ const (
 	timeoutSecond = 5 * time.Second
 )
 
-func setupDatabase(cfg *config.Config) (*gorm.DB, func(), error) {
-	db, err := database.Connect(cfg.DBURL, &cfg.DB)
+func setupDatabase(ctx context.Context, cfg *config.Config) (*gorm.DB, func(), error) {
+	db, err := database.Connect(ctx, cfg.DBURL, &cfg.DB)
 	if err != nil {
 		return nil, nil, fmt.Errorf("database connection failed: %w", err)
 	}

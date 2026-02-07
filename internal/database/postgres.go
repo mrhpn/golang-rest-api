@@ -76,7 +76,7 @@ func (l *CustomGormLogger) Trace(ctx context.Context, begin time.Time, fc func()
 }
 
 // Connect establishes a database connection with retry logic and configurable pool settings
-func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
+func Connect(parentCtx context.Context, dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 	gormConfig := &gorm.Config{
 		AllowGlobalUpdate: false, // safety: prevent global updates/deletes without a WHERE clause
 		PrepareStmt:       true,  // performance: cache prepared statements
@@ -84,10 +84,57 @@ func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 
 	gormConfig.Logger = &CustomGormLogger{}
 
+	db, err := connectWithRetry(dsn, gormConfig, dbCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+
+	poolCfg := normalizePoolConfig(dbCfg)
+	applyPoolConfig(sqlDB, poolCfg)
+
+	// Verify connection
+	pingCtx, cancel := context.WithTimeout(context.Background(), timeoutSecond)
+	defer cancel()
+
+	if err = sqlDB.PingContext(pingCtx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	log.Info().
+		Int("max_open_conns", poolCfg.maxOpenConns).
+		Int("max_idle_conns", poolCfg.maxIdleConns).
+		Dur("conn_max_lifetime", poolCfg.connMaxLifetime).
+		Dur("conn_max_idle_time", poolCfg.connMaxIdleTime).
+		Msg("✅ Database — connected successfully")
+
+	// Register callback to automatically apply query timeout to all queries
+	registerQueryTimeoutCallback(db, dbCfg)
+
+	// Start periodic connection pool metrics logging
+	if dbCfg.DBPoolMetricsEnabled {
+		metricsCtx := parentCtx
+		if metricsCtx == nil {
+			metricsCtx = context.Background()
+		}
+		interval := time.Duration(dbCfg.DBPoolMetricsLogIntervalSecond) * time.Second
+		if interval <= 0 {
+			interval = time.Duration(constants.DBPoolMetricsLogIntervalSecond) * time.Second
+		}
+		startConnectionPoolMetrics(metricsCtx, sqlDB, interval)
+	}
+
+	return db, nil
+}
+
+func connectWithRetry(dsn string, gormConfig *gorm.Config, dbCfg *config.DBConfig) (*gorm.DB, error) {
 	var db *gorm.DB
 	var err error
 
-	// Retry connection with exponential backoff
 	maxAttempts := dbCfg.RetryAttempts
 	if maxAttempts <= 0 {
 		maxAttempts = constants.DBMaxRetryAttempts
@@ -120,64 +167,50 @@ func Connect(dsn string, dbCfg *config.DBConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxAttempts, err)
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
-	}
+	return db, nil
+}
 
-	// Configure connection pool
-	// Set max open connections
+type poolConfig struct {
+	maxOpenConns    int
+	maxIdleConns    int
+	connMaxLifetime time.Duration
+	connMaxIdleTime time.Duration
+}
+
+func normalizePoolConfig(dbCfg *config.DBConfig) poolConfig {
 	maxOpenConns := dbCfg.MaxOpenConns
 	if maxOpenConns <= 0 {
 		maxOpenConns = constants.DBMaxOpenConns
 	}
-	sqlDB.SetMaxOpenConns(maxOpenConns)
 
-	// Set max idle connections
 	maxIdleConns := dbCfg.MaxIdleConns
 	if maxIdleConns <= 0 {
 		maxIdleConns = constants.DBMaxIdleConns
 	}
-	sqlDB.SetMaxIdleConns(maxIdleConns)
 
-	// Set connection max life time
 	connMaxLifetime := time.Duration(dbCfg.ConnMaxLifetimeMinute) * time.Minute
 	if connMaxLifetime <= 0 {
 		connMaxLifetime = constants.DBMaxLifetimeMinute * time.Minute
 	}
-	sqlDB.SetConnMaxLifetime(connMaxLifetime)
 
-	// Set connection max idle time
 	connMaxIdleTime := time.Duration(dbCfg.ConnMaxIdleTimeMinute) * time.Minute
 	if connMaxIdleTime <= 0 {
 		connMaxIdleTime = constants.DBConnMaxIdleTimeMinute * time.Minute
 	}
-	sqlDB.SetConnMaxIdleTime(connMaxIdleTime)
 
-	// Verify connection
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutSecond)
-	defer cancel()
-
-	if err = sqlDB.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+	return poolConfig{
+		maxOpenConns:    maxOpenConns,
+		maxIdleConns:    maxIdleConns,
+		connMaxLifetime: connMaxLifetime,
+		connMaxIdleTime: connMaxIdleTime,
 	}
+}
 
-	log.Info().
-		Int("max_open_conns", maxOpenConns).
-		Int("max_idle_conns", maxIdleConns).
-		Dur("conn_max_lifetime", connMaxLifetime).
-		Dur("conn_max_idle_time", connMaxIdleTime).
-		Msg("✅ Database — connected successfully")
-
-	// Register callback to automatically apply query timeout to all queries
-	registerQueryTimeoutCallback(db, dbCfg)
-
-	// Start periodic connection pool metrics logging
-	if dbCfg.DBPoolMetricsEnabled {
-		startConnectionPoolMetrics(sqlDB)
-	}
-
-	return db, nil
+func applyPoolConfig(sqlDB *sql.DB, cfg poolConfig) {
+	sqlDB.SetMaxOpenConns(cfg.maxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.maxIdleConns)
+	sqlDB.SetConnMaxLifetime(cfg.connMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(cfg.connMaxIdleTime)
 }
 
 // registerQueryTimeoutCallback registers a GORM callback that automatically
@@ -223,19 +256,26 @@ func registerQueryTimeoutCallback(db *gorm.DB, dbCfg *config.DBConfig) {
 
 // startConnectionPoolMetrics starts a goroutine that periodically logs database
 // connection pool statistics for monitoring and debugging purposes.
-func startConnectionPoolMetrics(sqlDB *sql.DB) {
+func startConnectionPoolMetrics(ctx context.Context, sqlDB *sql.DB, interval time.Duration) {
 	go func() {
-		ticker := time.NewTicker(time.Duration(constants.DBPoolMetricsLogIntervalSecond) * time.Second)
+		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
-		for range ticker.C {
-			stats := sqlDB.Stats()
-			log.Info().
-				Int("open_connections", stats.OpenConnections).
-				Int("in_use", stats.InUse).
-				Int("idle", stats.Idle).
-				Int64("wait_count", stats.WaitCount).
-				Dur("wait_duration", stats.WaitDuration).
-				Msg("Database connection pool stats")
+		log.Info().Dur("interval", interval).Msg("📝 Database — pool metrics logging started")
+		for {
+			select {
+			case <-ctx.Done():
+				log.Info().Msg("✓ Database pool metrics logger stopped")
+				return
+			case <-ticker.C:
+				stats := sqlDB.Stats()
+				log.Info().
+					Int("open_connections", stats.OpenConnections).
+					Int("in_use", stats.InUse).
+					Int("idle", stats.Idle).
+					Int64("wait_count", stats.WaitCount).
+					Dur("wait_duration", stats.WaitDuration).
+					Msg("Database connection pool stats")
+			}
 		}
 	}()
 }

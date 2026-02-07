@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/app"
@@ -18,8 +20,11 @@ func runApplication() error {
 	// Setup logger
 	logger := setupLogger(cfg)
 
-	// Setup database connection
-	db, dbCleanup, dbErr := setupDatabase(cfg)
+	// Setup database connection & materics logging
+	dbMetricsCtx, dbMetricsCancel := context.WithCancel(context.Background())
+	defer dbMetricsCancel()
+
+	db, dbCleanup, dbErr := setupDatabase(dbMetricsCtx, cfg)
 	if dbErr != nil {
 		log.Error().Err(dbErr).Msg("database setup failed")
 		return dbErr
