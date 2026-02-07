@@ -31,7 +31,7 @@ func SetupMinio(cfg MinioConfig) (*minio.Client, error) {
 		return nil, fmt.Errorf("failed to initialize minio client: %w", err)
 	}
 
-	log.Info().Msg("✅ MinIO — connected successfully")
+	log.Info().Msg("✅ Storage (MinIO) — connected successfully")
 
 	// 2. Prepare bucket
 	ctx, cancel := context.WithTimeout(context.Background(), bucketCreateTimeout)
@@ -48,7 +48,7 @@ func SetupMinio(cfg MinioConfig) (*minio.Client, error) {
 		}
 	}
 
-	log.Info().Msg("✅ MinIO — Bucket checked successfully")
+	log.Info().Msg("✅ Storage (MinIO) — Bucket checked successfully")
 
 	return client, nil
 }

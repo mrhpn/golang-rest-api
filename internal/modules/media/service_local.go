@@ -5,35 +5,30 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/minio/minio-go/v7"
+	"github.com/rs/zerolog/log"
 
 	"github.com/mrhpn/go-rest-api/internal/apperror"
 	"github.com/mrhpn/go-rest-api/internal/constants"
 )
 
-const healthCheckTimeout = 5 * time.Second
-
-// minioService implements the Service interface using MinIO as the underlying object storage backend.
-type minioService struct {
-	client     *minio.Client
-	bucketName string
+// localService implements the Service interface using the local filesystem.
+type localService struct {
+	basePath string
 }
 
-// NewMinioService initializes a MinIO-backed media service with the provided connection credentials and bucket configuration.
-func NewMinioService(client *minio.Client, bucketName string) Service {
-	return &minioService{
-		client:     client,
-		bucketName: bucketName,
-	}
+// NewLocalService initializes a local filesystem-backed media service.
+func NewLocalService(basePath string) Service {
+	log.Info().Msg("✅ Storage (local) — exists and ready at " + basePath)
+	return &localService{basePath: basePath}
 }
 
-// Upload streams the file to MinIO and returns the path
-func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, subDir fileCategory) (string, error) {
-	src, err := file.Open() // 80
+// Upload stores the file on disk and returns the relative public path.
+func (s *localService) Upload(_ context.Context, file *multipart.FileHeader, subDir fileCategory) (string, error) {
+	src, err := file.Open()
 	if err != nil {
 		return "", apperror.Wrap(
 			apperror.Internal,
@@ -46,8 +41,6 @@ func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, s
 
 	// 1. initialize vars with raw upload data
 	var reader io.Reader = src
-	size := file.Size
-	contentType := file.Header.Get("Content-Type")
 	ext := filepath.Ext(file.Filename)
 
 	// 2. define processing rules based on directory
@@ -71,7 +64,7 @@ func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, s
 
 	// 3. apply processing if options were found
 	if opts != nil {
-		processed, newSize, pErr := processImage(src, *opts) // 116
+		processed, _, pErr := processImage(src, *opts)
 		if pErr != nil {
 			return "", apperror.Wrap(
 				apperror.BadRequest,
@@ -81,8 +74,6 @@ func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, s
 			)
 		}
 		reader = processed
-		size = newSize
-		contentType = "image/jpeg"
 		ext = ".jpg"
 	}
 
@@ -90,9 +81,17 @@ func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, s
 	objectName := fmt.Sprintf("%s/%s%s", subDir, uuid.New().String(), ext)
 
 	// 5. create directories and store the file
-	_, err = s.client.PutObject(ctx, s.bucketName, objectName, reader, size, minio.PutObjectOptions{
-		ContentType: contentType,
-	})
+	storagePath := filepath.Join(s.basePath, objectName)
+	if mkErr := os.MkdirAll(filepath.Dir(storagePath), 0750); mkErr != nil {
+		return "", apperror.Wrap(
+			apperror.Internal,
+			errUploadToStorage.Code,
+			errUploadToStorage.Message,
+			mkErr,
+		)
+	}
+
+	dst, err := os.Create(storagePath)
 	if err != nil {
 		return "", apperror.Wrap(
 			apperror.Internal,
@@ -101,18 +100,24 @@ func (s *minioService) Upload(ctx context.Context, file *multipart.FileHeader, s
 			err,
 		)
 	}
+	defer func() { _ = dst.Close() }()
+
+	if _, copyErr := io.Copy(dst, reader); copyErr != nil {
+		return "", apperror.Wrap(
+			apperror.Internal,
+			errUploadToStorage.Code,
+			errUploadToStorage.Message,
+			copyErr,
+		)
+	}
 
 	return fmt.Sprintf("/%s", objectName), nil
 }
 
-// HealthCheck verifies that MinIO is accessible and the bucket exists
-func (s *minioService) HealthCheck(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, healthCheckTimeout)
-	defer cancel()
-
-	// Check if bucket exists and is accessible
-	exists, err := s.client.BucketExists(ctx, s.bucketName)
-	if err != nil {
+// HealthCheck verifies that the base path exists and is writable.
+func (s *localService) HealthCheck(ctx context.Context) error {
+	_ = ctx
+	if err := os.MkdirAll(s.basePath, 0750); err != nil {
 		return apperror.Wrap(
 			apperror.Internal,
 			errStorageHealthCheck.Code,
@@ -120,14 +125,5 @@ func (s *minioService) HealthCheck(ctx context.Context) error {
 			err,
 		)
 	}
-
-	if !exists {
-		return apperror.New(
-			apperror.Internal,
-			errStorageBucketMissing.Code,
-			errStorageBucketMissing.Message,
-		)
-	}
-
 	return nil
 }

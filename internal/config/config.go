@@ -22,7 +22,7 @@ type Config struct {
 	Redis     RedisConfig
 	JWT       JWTConfig
 	Log       LogConfig
-	Storage   MinioConfig
+	Storage   StorageConfig
 }
 
 // HTTPConfig represents the http-related config
@@ -79,13 +79,15 @@ type LogConfig struct {
 	Compress       bool
 }
 
-// MinioConfig represents app's storage (minio) related config
-type MinioConfig struct {
+// StorageConfig represents app's storage (minio/local) related config
+type StorageConfig struct {
+	Provider   string
 	Host       string
 	AccessKey  string
 	SecretKey  string
 	BucketName string
 	UseSSL     bool
+	LocalPath  string
 }
 
 // Load loads the application configuration from environment variables.
@@ -153,12 +155,14 @@ func Load() (*Config, error) {
 			Compress:       getEnvAsBool("LOG_COMPRESS", true),
 		},
 
-		Storage: MinioConfig{
+		Storage: StorageConfig{
+			Provider:   getEnv("STORAGE_PROVIDER", "minio"),
 			Host:       getEnv("STORAGE_HOST", ""),
 			AccessKey:  getEnv("STORAGE_ACCESS_KEY", "minioadmin"),
 			SecretKey:  getEnv("STORAGE_SECRET_KEY", "minioadmin"),
 			BucketName: getEnv("STORAGE_BUCKET_NAME", "app_assets"),
 			UseSSL:     getEnvAsBool("STORAGE_USE_SSL", false),
+			LocalPath:  getEnv("STORAGE_LOCAL_PATH", "./uploads"),
 		},
 	}
 
@@ -168,8 +172,17 @@ func Load() (*Config, error) {
 	if cfg.JWT.Secret == "" || len(cfg.JWT.Secret) < constants.JWTSecretMinLength {
 		return nil, fmt.Errorf("env: JWT_SECRET is missing or less than %d characters", constants.JWTSecretMinLength)
 	}
-	if cfg.Storage.Host == "" {
-		return nil, errors.New("env: STORAGE_HOST is missing")
+	switch strings.ToLower(cfg.Storage.Provider) {
+	case "minio":
+		if cfg.Storage.Host == "" {
+			return nil, errors.New("env: STORAGE_HOST is missing")
+		}
+	case "local":
+		if cfg.Storage.LocalPath == "" {
+			return nil, errors.New("env: STORAGE_LOCAL_PATH is missing")
+		}
+	default:
+		return nil, errors.New("env: STORAGE_PROVIDER is invalid (should be minio | local)")
 	}
 
 	return cfg, nil
